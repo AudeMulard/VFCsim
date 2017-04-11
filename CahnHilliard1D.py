@@ -21,7 +21,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1.5 #ratio of the two viscosities
+Mobility = 0.75 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = - viscosity1 / permeability1
@@ -37,7 +37,7 @@ velocity = CellVariable(mesh=mesh, name='velocity')
 #-----------------------------------------------------------------------
 
 #Order Parameter
-phi = CellVariable(name=r'$\phi$', mesh=mesh)
+phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld = 1)
 
 #Parameters
 Cahn_number = 0.001
@@ -46,12 +46,13 @@ M = Mobility * epsilon**2
 l = 1.
 
 #New values
-beta = beta1 * phi + beta2 * (1-phi)
+beta = CellVariable(mesh=mesh, name='beta')
+beta.setValue = beta1 * phi + beta2 * (1-phi)
 
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (3 * PHI**2 - 3 * PHI + 1/2)
-eq = (TransientTerm() + AdvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
+eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
 
 #-----------------------------------------------------------------------
 #---------------Initialization and Boundary Conditions------------------
@@ -95,79 +96,96 @@ from fipy.variables.faceGradVariable import _FaceGradVariable
 volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
 contrvolume=volume.arithmeticFaceValue
 
-coeff = 1./ ap.arithmeticFaceValue*mesh._faceAreas * mesh._cellDistances
+coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
 pressureCorrectionEq = DiffusionTerm(coeff=coeff) - Velocity.divergence
-X = mesh.faceCenters
+X = mesh.faceCenters[0]
 pressureCorrection.constrain(0., mesh.facesLeft)
 
-"""def solveStokes(phi):
-	for sweep in range(sweeps):
-		#Calculations of the fields at the new time using the latest solution un and pn as starting estimates for un+1 and pn+1
-		#Assemble and solve the linearized algebraiec equation systems for the velocity components to obtain ustarred
-		velocityEq.cacheMatrix()
-		xres = velocityEq.sweep(var=velocity, underRelaxation=velocityRelaxation)
-		xmat = velocityEq.matrix
-		#update matrix
-		ap[:] = - xmat.takeDiagonal()
-		#Correction due to colocated grid
-		presgrad = pressure.grad
-		facepresgrad = _FaceGradVariable(pressure)
-		Velocity=velocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad.arithmeticFaceValue-facepresgrad)
-		#Assemble and solve the pressure correction equation to obtain p'
-		pressureCorrectionEq.cacheRHSvector()
-		#correct velocity and pressure to obtain um, which satisfies the continuity and new pressure pm
-		pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
-		velocity.setValue(velocity - pressureCorrection.grad / ap * mesh.cellVolumes)
-		return
-		#return to start and begin again with um and pm as improved estimates until all corrections are negligibly small
-		
-"""
 #-----------------------------------------------------------------------
-#--------------------------Time Resolution------------------------------
+#------------Phase field formation: Initial equilibrium-----------------
+
+timeStep = 1e-6
+for i in range(10):
+	phi.updateOld()
+	res = 1e+10
+	while res > 1e-5:
+		eq.sweep(var=phi, dt=timeStep)
+
+#-----------------------------------------------------------------------
+#----------------------------Dynamics-----------------------------------
 #-----------------------------------------------------------------------
 
-dt = numerix.exp(-5)
-time = 0.
-"""
-while time < 1000:
-	time +=dt
-	eq.solve(phi, dt=dt)
-	for sweep in range(sweeps):
-		#Calculations of the fields at the new time using the latest solution un and pn as starting estimates for un+1 and pn+1
-		#Assemble and solve the linearized algebraiec equation systems for the velocity components to obtain ustarred
-		velocityEq.cacheMatrix()
-		xres = velocityEq.sweep(var=velocity, underRelaxation=velocityRelaxation)
-		xmat = velocityEq.matrix
-		#update matrix
-		ap[:] = - xmat.takeDiagonal()
-		#Correction due to colocated grid
-		presgrad = pressure.grad
-		facepresgrad = _FaceGradVariable(pressure)
-		Velocity=velocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad.arithmeticFaceValue-facepresgrad)
-		#Assemble and solve the pressure correction equation to obtain p'
-		pressureCorrectionEq.cacheRHSvector()
-		#correct velocity and pressure to obtain um, which satisfies the continuity and new pressure pm
-		pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
-		velocity.setValue(velocity - pressureCorrection.grad / ap * mesh.cellVolumes)
-	viewer2.plot()
-"""
 
-eq.solve(phi, dt=dt)
+#Resolution de l'equation de phase field
+##voir examples.phase.simple
 
-#Calculations of the fields at the new time using the latest solution un and pn as starting estimates for un+1 and pn+1
-#Assemble and solve the linearized algebraiec equation systems for the velocity components to obtain ustarred
-velocityEq.cacheMatrix()
-xres = velocityEq.sweep(var=velocity, underRelaxation=velocityRelaxation)
-xmat = velocityEq.matrix
-#update matrix
-ap[:] = - xmat.takeDiagonal()
-#Correction due to colocated grid
-presgrad = pressure.grad
-facepresgrad = _FaceGradVariable(pressure)
-Velocity=velocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad.arithmeticFaceValue-facepresgrad)
-#Assemble and solve the pressure correction equation to obtain p'
-pressureCorrectionEq.cacheRHSvector()
-#correct velocity and pressure to obtain um, which satisfies the continuity and new pressure pm
-pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
-velocity.setValue(velocity - pressureCorrection.grad / ap * mesh.cellVolumes)
+timeStep = .1 * dx / velocity
+elapsed = 0
+while elapsed < displacement/velocity:
+	phi.updateOld()
+	res = 1e+10
+	while res > 1e-5:
+		eq.sweep(var=phi, dt=timeStep)
+	elapsed += timeStep
+
+#Resolution des eq de mouvements couplees sur staggered grid avec SIMPLE
+
+#Variables
+pressure = CellVariable(mesh=mesh, name='pressure')
+pressureCorrection = CellVariable(mesh=mesh)
+xVelocity = CellVariable(mesh=mesh, name='X Velocity')
+
+xVelocityEq = DiffusionTerm(coeff=viscosity) - pressure.grad.dot([1.,])
+
+
+ap = CellVariable(mesh=mesh, value=1.)
+coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
+pressureCorrectionEq = DiffusionTerm(coeff=coeff) - xVelocity.grad[1.,]
+
+
+
+#no-slip boundary conditions
+xVelocity.constrain(0., mesh.facesRight | mesh.facesLeft | mesh.facesBottom)
+xVelocity.constrain(U, mesh.facesTop)
+yVelocity.constrain(0., mesh.exteriorFaces)
+X = mesh.faceCenters[0]
+pressureCorrection.constrain(0., mesh.facesLeft)
+
+#Viewers
+if __name__ == '__main__':
+    viewer = Viewer(vars=(pressure, xVelocity, yVelocity), xmin=0., xmax=1., ymin=0., colorbar=True)
+
+#iterations
+for sweep in range(sweeps):
+    ##Solve the Stokes equations to get starred values
+    xVelocityEq.cacheMatrix()
+    xres = xVelocityEq.sweep(var=xVelocity,
+                             underRelaxation=velocityRelaxation)
+    xmat = xVelocityEq.matrix
+    yres = yVelocityEq.sweep(var=yVelocity,
+                             underRelaxation=velocityRelaxation)
+    ##update the ap coefficient from the matrix diagonal
+    ap[:] = -xmat.takeDiagonal()
+    ##solve the pressure correction equation
+    pressureCorrectionEq.cacheRHSvector()
+    ## left bottom point must remain at pressure 0, so no correction
+    pres = pressureCorrectionEq.sweep(var=pressureCorrection)
+    rhs = pressureCorrectionEq.RHSvector
+    #
+    ## update the pressure using the corrected value
+    pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
+    ## update the velocity using the corrected pressure
+    xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    #
+    if __name__ == '__main__':
+        if sweep%10 == 0:
+            print 'sweep:',sweep,', x residual:',xres, ', y residual:',yres, ', p residual:', pres, ', continuity:', max(abs(rhs))
+            viewer.plot()
+
+
+#Algorithme global
+for i in range(300):
+	solve phi
+	solve u,v
+	viewer.plot()
 
