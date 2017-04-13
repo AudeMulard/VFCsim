@@ -30,7 +30,7 @@ beta2 = - viscosity2 / permeability2
 
 #Variable of the fluids
 pressure = CellVariable(mesh=mesh, name='pressure')
-Velocity = FaceVariable(mesh=mesh, name = 'velocity', rank=1) #vector in convection term
+Velocity = FaceVariable(mesh=mesh, name = 'Velocity', rank=1)
 #-----------------------------------------------------------------------
 #------------------------Phase-field model------------------------------
 #-----------------------------------------------------------------------
@@ -45,7 +45,7 @@ M = Mobility * epsilon**2
 l = 1.
 
 #New values
-beta = CellVariable(mesh=mesh, name='beta')
+beta = Variable(mesh=mesh, name='beta')
 beta.setValue = beta1 * phi + beta2 * (1-phi)
 
 #Cahn-Hilliard equation
@@ -54,7 +54,7 @@ coeff1 = Mobility * l * (3 * PHI**2 - 3 * PHI + 1/2)
 eq = (TransientTerm() + ConvectionTerm(Velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
 
 #-----------------------------------------------------------------------
-#---------------Initialization and Boundary Conditions------------------
+#-------------------------Boundary Conditions---------------------------
 #-----------------------------------------------------------------------
 
 x = mesh.cellCenters[0]
@@ -67,7 +67,7 @@ initialize(phi)
 #Boundary conditions
 Q = 1. #rate of injection
 Uinf = Q / (b*W)
-velocity.constrain(Uinf, where=mesh.facesRight | mesh.facesLeft)
+Velocity.constrain(Uinf, where=mesh.facesRight | mesh.facesLeft)
 
 #-----------------------------------------------------------------------
 #-------------------------------Viewers---------------------------------
@@ -96,7 +96,11 @@ pressureCorrectionEq = DiffusionTerm(coeff=coeff) - Velocity.divergence
 x = mesh.faceCenters[0]
 pressureCorrection.constrain(0., mesh.facesLeft)
 
-#Initialisation of velocity and pressure field:
+#-----------------------------------------------------------------------
+#---------------------------Initialization------------------------------
+#-----------------------------------------------------------------------
+
+#velocity and pressure field:
 
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
@@ -123,9 +127,8 @@ for sweep in range(sweeps):
             print 'sweep:',sweep,', x residual:',xres, ', y residual:',yres, ', p residual:', pres, ', continuity:', max(abs(rhs))
             viewer.plot()
 
-#-----------------------------------------------------------------------
-#------------Phase field formation: Initial equilibrium-----------------
-#-----------------------------------------------------------------------
+
+#Phase field formation: Initial equilibrium
 
 timeStep = 1e-6
 for i in range(10):
