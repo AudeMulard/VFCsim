@@ -89,7 +89,13 @@ for sweep in range(sweeps):
 PHI = phi.arithmeticFaceValue
 coeff = M * lambda * (3 * PHI**2 - 3 * PHI +1/2)
 eq = (TransientTerm() + ConvectionTerm(Velocity) == DiffusionTerm(coeff=coeff) + DiffusionTerm(coeff=(M, lambda)))
-
+dexp = -5
+elapsed = 0.
+if __name__ == "__main__":
+    duration = 1000.
+else:
+    duration = 1000.
+    
 while elapsed < duration:
 	dt = min(100, numerix.exp(dexp))
 	elapsed += dt

@@ -30,8 +30,7 @@ beta2 = - viscosity2 / permeability2
 
 #Variable of the fluids
 pressure = CellVariable(mesh=mesh, name='pressure')
-velocity = CellVariable(mesh=mesh, name='velocity')
-
+Velocity = FaceVariable(mesh=mesh, name = 'velocity', rank=1) #vector in convection term
 #-----------------------------------------------------------------------
 #------------------------Phase-field model------------------------------
 #-----------------------------------------------------------------------
@@ -52,7 +51,7 @@ beta.setValue = beta1 * phi + beta2 * (1-phi)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (3 * PHI**2 - 3 * PHI + 1/2)
-eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
+eq = (TransientTerm() + ConvectionTerm(Velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
 
 #-----------------------------------------------------------------------
 #---------------Initialization and Boundary Conditions------------------
@@ -87,29 +86,53 @@ sweeps = 300
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 pressureCorrection = CellVariable(mesh=mesh)
-Velocity = FaceVariable(mesh=mesh)
-from fipy.variables.faceGradVariable import _FaceGradVariable
-velocityEq = (ImplicitSourceTerm(coeff=beta) == pressure.grad[0.,])
+
+velocityEq = (ImplicitSourceTerm(coeff=beta) == pressure.grad[1.,]) #Darcy's law
+
 ap = CellVariable(mesh=mesh, value=1.)
 
-from fipy.variables.faceGradVariable import _FaceGradVariable
-volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
-contrvolume=volume.arithmeticFaceValue
-
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-pressureCorrectionEq = DiffusionTerm(coeff=coeff) - Velocity.divergence
-X = mesh.faceCenters[0]
+pressureCorrectionEq = DiffusionTerm(coeff=coeff) - Velocity.divergence 
+x = mesh.faceCenters[0]
 pressureCorrection.constrain(0., mesh.facesLeft)
+
+#Initialisation of velocity and pressure field:
+
+for sweep in range(sweeps):
+    ##Solve the Stokes equations to get starred values
+    velocityEq.cacheMatrix()
+    vres = velocityEq.sweep(var=Velocity, underRelaxation=velocityRelaxation)
+    xmat = xVelocityEq.matrix
+    yres = yVelocityEq.sweep(var=yVelocity,
+                             underRelaxation=velocityRelaxation)
+    ##update the ap coefficient from the matrix diagonal
+    ap[:] = -xmat.takeDiagonal()
+    ##solve the pressure correction equation
+    pressureCorrectionEq.cacheRHSvector()
+    ## left bottom point must remain at pressure 0, so no correction
+    pres = pressureCorrectionEq.sweep(var=pressureCorrection)
+    rhs = pressureCorrectionEq.RHSvector
+    #
+    ## update the pressure using the corrected value
+    pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
+    ## update the velocity using the corrected pressure
+    xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    #
+    if __name__ == '__main__':
+        if sweep%10 == 0:
+            print 'sweep:',sweep,', x residual:',xres, ', y residual:',yres, ', p residual:', pres, ', continuity:', max(abs(rhs))
+            viewer.plot()
 
 #-----------------------------------------------------------------------
 #------------Phase field formation: Initial equilibrium-----------------
+#-----------------------------------------------------------------------
 
 timeStep = 1e-6
 for i in range(10):
 	phi.updateOld()
 	res = 1e+10
 	while res > 1e-5:
-		eq.sweep(var=phi, dt=timeStep)
+		res = eq.sweep(var=phi, dt=timeStep)
 
 #-----------------------------------------------------------------------
 #----------------------------Dynamics-----------------------------------
@@ -130,27 +153,6 @@ while elapsed < displacement/velocity:
 
 #Resolution des eq de mouvements couplees sur staggered grid avec SIMPLE
 
-#Variables
-pressure = CellVariable(mesh=mesh, name='pressure')
-pressureCorrection = CellVariable(mesh=mesh)
-xVelocity = CellVariable(mesh=mesh, name='X Velocity')
-
-xVelocityEq = DiffusionTerm(coeff=viscosity) - pressure.grad.dot([1.,])
-
-
-ap = CellVariable(mesh=mesh, value=1.)
-coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-pressureCorrectionEq = DiffusionTerm(coeff=coeff) - xVelocity.grad[1.,]
-
-
-
-#no-slip boundary conditions
-xVelocity.constrain(0., mesh.facesRight | mesh.facesLeft | mesh.facesBottom)
-xVelocity.constrain(U, mesh.facesTop)
-yVelocity.constrain(0., mesh.exteriorFaces)
-X = mesh.faceCenters[0]
-pressureCorrection.constrain(0., mesh.facesLeft)
-
 #Viewers
 if __name__ == '__main__':
     viewer = Viewer(vars=(pressure, xVelocity, yVelocity), xmin=0., xmax=1., ymin=0., colorbar=True)
@@ -158,9 +160,8 @@ if __name__ == '__main__':
 #iterations
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
-    xVelocityEq.cacheMatrix()
-    xres = xVelocityEq.sweep(var=xVelocity,
-                             underRelaxation=velocityRelaxation)
+    velocityEq.cacheMatrix()
+    vres = velocityEq.sweep(var=Velocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
     yres = yVelocityEq.sweep(var=yVelocity,
                              underRelaxation=velocityRelaxation)
