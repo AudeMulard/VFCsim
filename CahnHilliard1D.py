@@ -11,8 +11,8 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-nx = 400 #number of controle volume
-dx = L/nx #width of controle volume
+dx = 0.02 * W #width of controle volume
+nx = L / dx #number of controle volume
 mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
@@ -31,6 +31,7 @@ beta2 = - viscosity2 / permeability2
 #Variable of the fluids
 pressure = CellVariable(mesh=mesh, name='pressure')
 Velocity = FaceVariable(mesh=mesh, name = 'Velocity', rank=1)
+
 #-----------------------------------------------------------------------
 #------------------------Phase-field model------------------------------
 #-----------------------------------------------------------------------
@@ -38,15 +39,15 @@ Velocity = FaceVariable(mesh=mesh, name = 'Velocity', rank=1)
 #Order Parameter
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld = 1)
 
+#New values
+beta = Variable(name='beta')
+beta.setValue = beta1 * phi + beta2 * (1-phi)
+
 #Parameters
 Cahn_number = 0.001
 epsilon = Cahn_number * W
 M = Mobility * epsilon**2
 l = 1.
-
-#New values
-beta = Variable(mesh=mesh, name='beta')
-beta.setValue = beta1 * phi + beta2 * (1-phi)
 
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
@@ -68,44 +69,45 @@ initialize(phi)
 Q = 1. #rate of injection
 Uinf = Q / (b*W)
 Velocity.constrain(Uinf, where=mesh.facesRight | mesh.facesLeft)
-
+pressure.constrain(0., where=mesh.facesLeft)
 #-----------------------------------------------------------------------
 #-------------------------------Viewers---------------------------------
 #-----------------------------------------------------------------------
 
 #Viewer
 viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
-viewer2 = Viewer(vars = (phi, pressure, velocity))
+#viewer2 = Viewer(vars = (phi, pressure, Velocity))
 
 
 #-----------------------------------------------------------------------
-#----------------Computation of velocity and pressure-------------------
+#-------------------------Velocity and pressure-------------------------
 #-----------------------------------------------------------------------
 
-sweeps = 300
-pressureRelaxation = 0.8
-velocityRelaxation = 0.5
+#Equations
 pressureCorrection = CellVariable(mesh=mesh)
+pressureCorrection.constrain(0., mesh.facesLeft)
 
-velocityEq = (ImplicitSourceTerm(coeff=beta) == pressure.grad[1.,]) #Darcy's law
+xVelocity = CellVariable(mesh=mesh)
+velocityEq = beta * xVelocity - pressure.grad.dot([1.,]) #Darcy's law
 
 ap = CellVariable(mesh=mesh, value=1.)
-
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
 pressureCorrectionEq = DiffusionTerm(coeff=coeff) - Velocity.divergence 
-x = mesh.faceCenters[0]
-pressureCorrection.constrain(0., mesh.facesLeft)
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
 #velocity and pressure field:
+pressureRelaxation = 0.8
+velocityRelaxation = 0.5
+
+sweeps = 300
 
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     velocityEq.cacheMatrix()
-    vres = velocityEq.sweep(var=Velocity, underRelaxation=velocityRelaxation)
+    vres = velocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
     yres = yVelocityEq.sweep(var=yVelocity,
                              underRelaxation=velocityRelaxation)
