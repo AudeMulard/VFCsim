@@ -1,11 +1,13 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
+Created on Thu Apr 20 11:51:00 2017
 
-This is a temporary script file.
+@author: am2548
 """
 
 from fipy import *
+
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -25,12 +27,9 @@ mesh = Grid1D(dx=dx, nx=nx)
 #-----------------------------------------------------------------------
 
 #Parameters of the fluids
-viscosity2 = 1.
-Mobility = 0.75 #ratio of the two viscosities
-viscosity1 = viscosity2 * Mobility
-permeability1 = permeability2 = 1.
-beta1 = - viscosity1 / permeability1
-beta2 = - viscosity2 / permeability2
+viscosity = 1.
+permeability = 1.
+beta = - viscosity / permeability
 
 
 #Variable of the fluids
@@ -39,49 +38,13 @@ xVelocity = CellVariable(mesh=mesh, name='X Velocity')
 velocity = FaceVariable(mesh=mesh, rank=1)
 
 #-----------------------------------------------------------------------
-#------------------------Phase-field model------------------------------
-#-----------------------------------------------------------------------
-
-#Order Parameter
-phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld = 1)
-
-#New values
-beta = Variable(name='beta')
-beta.setValue = beta1 * phi + beta2 * (1-phi)
-
-#Parameters
-Cahn_number = 0.001
-epsilon = Cahn_number * W
-M = Mobility * epsilon**2
-l = 1.
-
-#Cahn-Hilliard equationimport numpy
-PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
-coeff1 = Mobility * l * (3 * PHI**2 - 3 * PHI + 1/2)
-eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
-#eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) + DiffusionTerm(coeff=(M, l)))
-#-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
 #-----------------------------------------------------------------------
 
-x = mesh.cellCenters[0]
-def initialize(phi):
-	phi.setValue(1.)
-	phi.setValue(0., where=x > L/2)
-
-initialize(phi)
-"""
-print(phi)
-for i in range(10):
-    res = eq.sweep(var=phi, dt=1e-6)
-    print(phi)
-
-viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
-"""
 #Boundary conditions
 Q = 1. #rate of injection
 Uinf = Q / (b*W)
-xVelocity.constrain(Uinf, where=mesh.exteriorFaces)
+xVelocity.constrain(Uinf, where=mesh.facesLeft | mesh.facesRight)
 pressure.constrain(0., where=mesh.facesLeft)
 
 #-----------------------------------------------------------------------
@@ -89,7 +52,7 @@ pressure.constrain(0., where=mesh.facesLeft)
 #-----------------------------------------------------------------------
 
 #Viewer
-#viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
+viewer = Viewer(vars = (pressure, xVelocity, velocity), xmin=0., xmax=1., ymin=0., ymax=1., colorbar=True)
 #viewer2 = Viewer(vars = (phi, pressure, xVelocity))
 
 
@@ -119,10 +82,10 @@ contrvolume=volume.arithmeticFaceValue
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
-sweeps=300
+sweeps = 300
 
 xVelocityEq.cacheMatrix()
-xVelocityEq.solve(var=xVelocity)
+xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
 xmat = xVelocityEq.matrix
 ap[:] = -xmat.takeDiagonal()
 ##Rhie-chow correction
@@ -134,31 +97,14 @@ velocity[0] = xVelocity.arithmeticFaceValue \
 
 pressureCorrectionEq.cacheRHSvector()
 ## left bottom point must remain at pressure 0, so no correction
-pressureCorrectionEq.solve(var=pressureCorrection)
+pres = pressureCorrectionEq.sweep(var=pressureCorrection)
 rhs = pressureCorrectionEq.RHSvector
-print(rhs)
-"""
+
 ## update the pressure using the corrected value
 pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
 ## update the velocity using the corrected pressure
 xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
 
-#viewer2.plot()
 if __name__ == '__main__':
-    print max(abs(rhs))
-
-
-dexp = -5
-print(phi)
-timeStep = 1e-6
-phi.updateOld()
-res = 1e+10
-eq.solve(phi, dt=timeStep)
-elapsed = 0.
-duration = 1000.
-for i in range(10):
-    elapsed += timeStep
-    res = eq.sweep(var=phi, dt=1e-6)
+    print('x residual:' , xres , ', p residual:', pres, ', continuity:', max(abs(rhs)))
     viewer.plot()
-    print(phi)
-"""
