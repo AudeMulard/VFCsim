@@ -12,8 +12,8 @@ from fipy import *
 L = 1.0
 N = 50
 dL = L / N
-viscosity = 1
-permeability = 1
+viscosity = 1.
+permeability = 1.
 U = 1.
 beta = permeability/viscosity
 pressureRelaxation = 0.8
@@ -34,7 +34,7 @@ xVelocity = CellVariable(mesh=mesh, name='X Velocity')
 
 velocity = FaceVariable(mesh=mesh, rank=1)
 
-xVelocityEq = ImplicitSourceTerm(beta) + pressure.grad[0.]
+xVelocityEq = ImplicitSourceTerm(coeff=beta) + pressure.grad[0]
 
 
 ap = CellVariable(mesh=mesh, value=1.)
@@ -52,18 +52,18 @@ X = mesh.faceCenters
 pressureCorrection.constrain(0., mesh.facesLeft)
 
 #Viewers
-if __name__ == '__main__':
-    viewer = Viewer(vars=(pressure, xVelocity, velocity), xmin=0., xmax=1., ymin=0., colorbar=True)
-
+#if __name__ == '__main__':
+#    viewer = Viewer(vars=(pressure, xVelocity, velocity), xmin=0., xmax=1., ymin=0., colorbar=True)
+"""
 #iterations
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
-    xres = xVelocityEq.sweep(var=xVelocity,
-                             underRelaxation=velocityRelaxation)
+    xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
+    
     xmat = xVelocityEq.matrix
     ##update the ap coefficient from the matrix diagonal
-    ap[:] = -xmat.takeDiagonal()
+    ap[:] = - xmat.takeDiagonal()
     #
     ##update the face velocities based on starred values with the Rhi-Chow correction
     #cell pressure gradient
@@ -72,7 +72,8 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-    velocity[0, mesh.facesLeft.value] = U
+    #velocity[..., mesh.exteriorFaces.value]=0.
+    velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
     #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
@@ -87,9 +88,47 @@ for sweep in range(sweeps):
     #
     if __name__ == '__main__':
         if sweep%10 == 0:
-            print 'sweep:',sweep,', x residual:',xres, ', p residual:', pres, ', continuity:', max(abs(rhs)), xVelocity
-            viewer.plot()
+            print 'sweep:',sweep,', x residual:',xres, ', p residual:', pres, ', continuity:', max(abs(rhs)), xVelocity, ap
+            #viewer.plot()
 
 #test values in the last cell
-print numerix.allclose(pressure.globalValue[...,-1], 162.790867927)
-print numerix.allclose(xVelocity.globalValue[...,-1], 0.265072740929)
+#print numerix.allclose(pressure.globalValue[...,-1], 162.790867927)
+#print numerix.allclose(xVelocity.globalValue[...,-1], 0.265072740929)
+"""
+xVelocity.setValue(1.)
+for sweep in range(sweeps):
+    ##Solve the Stokes equations to get starred values
+    xVelocityEq.cacheMatrix()
+    xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
+    if __name__ == '__main__':
+        if sweep%10 == 0:
+            print(xVelocity)
+            """
+    xmat = xVelocityEq.matrix
+    ##update the ap coefficient from the matrix diagonal
+    ap[:] = - xmat.takeDiagonal()
+    #
+    ##update the face velocities based on starred values with the Rhi-Chow correction
+    #cell pressure gradient
+    presgrad = pressure.grad
+    #face pressure gradient
+    facepresgrad = _FaceGradVariable(pressure)
+    #
+    velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
+    #velocity[..., mesh.exteriorFaces.value]=0.
+    velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
+    #
+    ##solve the pressure correction equation
+    pressureCorrectionEq.cacheRHSvector()
+    ## left bottom point must remain at pressure 0, so no correction
+    pres = pressureCorrectionEq.sweep(var=pressureCorrection)
+    rhs = pressureCorrectionEq.RHSvector
+    #
+    ## update the pressure using the corrected value
+    pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
+    ## update the velocity using the corrected pressure
+    xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    if __name__ == '__main__':
+        if sweep%10 == 0:
+            print(xVelocity)
+            """
