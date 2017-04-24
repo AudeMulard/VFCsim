@@ -49,11 +49,12 @@ Cahn_number = 0.001
 epsilon = Cahn_number * W
 M = Mobility * epsilon**2
 l = 1.
-
+velocity = FaceVariable(mesh=mesh, rank=1)
+velocity.setValue(1.)
 #Cahn-Hilliard equationimport numpy
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (3 * PHI**2 - 2 * PHI + 1/2)
-eq = (TransientTerm() == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
+eq = (TransientTerm() + ConvectionTerm(velocity)== DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
 
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
