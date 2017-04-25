@@ -33,6 +33,7 @@ viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
 beta2 = viscosity2 / permeability2
+
 #Variable of the fluids
 pressure = CellVariable(mesh=mesh, name='pressure')
 pressureCorrection = CellVariable(mesh=mesh)
@@ -89,11 +90,11 @@ def initialize(phi):
 	phi.setValue(1, where=x > L/2)
 
 initialize(phi)
-beta.setValue = beta1 * phi + beta2 * (1-phi)
+
 
 #Velocity and pressure
 Q = 1. #rate of injection
-Uinf = Q / (b*W)
+U = Q / (b*W)
 xVelocity.constrain(U, mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
 pressureCorrection.constrain(0., mesh.facesLeft)
@@ -104,7 +105,7 @@ pressureCorrection.constrain(0., mesh.facesLeft)
 
 #Viewer
 viewer = Viewer(vars = (phi,), datamin=0.5, datamax=1.5)
-#viewer2 = Viewer(vars = (phi, pressure, xVelocity))
+viewer2 = Viewer(vars = (phi, pressure, xVelocity))
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
@@ -122,7 +123,6 @@ for sweep in range(sweeps):
     xmat = xVelocityEq.matrix
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
-    #print(ap)
     #
     ##update the face velocities based on starred values with the Rhi-Chow correction
     #cell pressure gradient
@@ -132,7 +132,7 @@ for sweep in range(sweeps):
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
     #velocity[..., mesh.exteriorFaces.value]=0.
-    velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
+    #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
     #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
@@ -144,6 +144,8 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    if sweep%10 == 0:
+        viewer2.plot()
            
 phi.updateOld()
 #Phase
@@ -156,12 +158,7 @@ viewer.plot()
 
 timeStep = 1e-6
 
-for i in range(500):
-    for j in range(10):
-    	phi.updateOld()
-    	res = 1e+10
-    	while res > 1e-5:
-    		res = eq.sweep(var=phi, dt=timeStep)
+for i in range(3):
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred values
         xVelocityEq.cacheMatrix()
@@ -169,8 +166,6 @@ for i in range(500):
         xmat = xVelocityEq.matrix
         ##update the ap coefficient from the matrix diagonal
         ap[:] = xmat.takeDiagonal()
-        #print(ap)
-        #
         ##update the face velocities based on starred values with the Rhi-Chow correction
         #cell pressure gradient
         presgrad = pressure.grad
@@ -191,6 +186,12 @@ for i in range(500):
         pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    for j in range(10):
+        phi.updateOld()
+        res= 1e+10
+        while res > 1e-5:
+               res = eq.sweep(var=phi, dt=timeStep)        
 
 
-viewer.plot()
+#viewer.plot()
+viewer2.plot()
