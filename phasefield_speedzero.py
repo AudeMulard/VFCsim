@@ -17,8 +17,8 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.02 * W #width of controle volume
-nx = L / dx #number of controle volume
+dx = 0.25 #width of controle volume
+nx = 1000 #number of controle volume
 mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
@@ -27,7 +27,10 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1. #ratio of the two viscosities
+Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon =1. #code starts going crazy below epsilon=0.1
+l = 1. #this is lambda from Hamouda's paper
+M = Mobility * epsilon**2 #M in Hamouda's paper
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = - viscosity1 / permeability1
@@ -38,37 +41,48 @@ beta2 = - viscosity2 / permeability2
 #-----------------------------------------------------------------------
 
 #Order Parameter
+#x = mesh.cellCenters[0]
 phi = CellVariable(name=r'$\phi$', mesh=mesh)
-
+#phi = CellVariable(name=r'$\phi$', mesh=mesh, value =GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01))
 #New values
-beta = Variable(name='beta')
-beta.setValue = beta1 * phi + beta2 * (1-phi)
+beta = Variable(name='beta', value = beta1 * phi + beta2 * (1.-phi))
 
 #Parameters
-Cahn_number = 0.001
-epsilon = Cahn_number * W
-M = Mobility * epsilon**2
-l = 1.
-velocity = FaceVariable(mesh=mesh, rank=1)
-velocity.setValue(1.)
+#Cahn_number = 0.001
+#epsilon = Cahn_number * W
+
+
+
+
 #Cahn-Hilliard equationimport numpy
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
-coeff1 = Mobility * l * (3 * PHI**2 - 2 * PHI + 1/2)
-eq = (TransientTerm() + ConvectionTerm(velocity)== DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
-
+coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
+## blows up when mobility is between 2.2 and 2.3 and 0.7 and 0.8, while l and epsilon=1
+#D = 10.
+#a = 1.
+#coeff1=D * a**2 *(1-6*PHI *(1-PHI))
+#eq = (TransientTerm() == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(D, epsilon**2)))
+eq = (TransientTerm()  == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
 #-----------------------------------------------------------------------
 
 x = mesh.cellCenters[0]
 def initialize(phi):
-	phi.setValue(0.5)
-	phi.setValue(1, where=x > L/2)
-
+	phi.setValue(0.)
+	phi.setValue(1., where=x > nx*dx/2)
+    
 initialize(phi)
-viewer = Viewer(vars=(phi,), datamin=-1., datamax=2.)
 
-for i in range(500):
-    eq.solve(var=phi, dt = 1e-6)
+viewer = Viewer(vars=(phi,), datamin=0., datamax=1.)
+
+dexp = -5
+elapsed = 0.
+duration = 1000.
+while elapsed <duration:
+    dt = min(30, numerix.exp(dexp))
+    elapsed += dt
+    dexp += 0.01
+    eq.solve(var=phi, dt = dt)
     if __name__ == '__main__':
         viewer.plot()

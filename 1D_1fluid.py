@@ -15,8 +15,8 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.02 * W #width of controle volume
-nx = L / dx #number of controle volume
+dx = 0.25 #width of controle volume
+nx = L/dx*1000/4 #number of controle volume
 #L = 1.0
 #N = 50
 #dL = L / N
@@ -24,7 +24,7 @@ viscosity = 1.
 permeability = 1.
 U = 1.
 beta = permeability/viscosity
-pressureRelaxation = 0.8
+pressureRelaxation = 0.8 #some numerical parameters
 velocityRelaxation = 0.5
 
 
@@ -58,7 +58,7 @@ pressureCorrection.constrain(0., mesh.facesLeft)
 
 #Viewers
 if __name__ == '__main__':
-    viewer = Viewer(vars=(pressure, xVelocity, velocity), xmin=0., xmax=1., ymin=0., colorbar=True)
+    viewer = Viewer(vars=(pressure, xVelocity))
 
 sweeps = 300
 for sweep in range(sweeps):
@@ -98,5 +98,5 @@ for sweep in range(sweeps):
             print(xVelocity)
     if __name__ == '__main__':
             if sweep%10 == 0:
-                print 'sweep:',sweep,', x residual:',xres, ', y residual:',yres, ', p residual:', pres, ', continuity:', max(abs(rhs))
+                print 'sweep:',sweep,', x residual:',xres, ', p residual:', pres, ', continuity:', max(abs(rhs))
                 viewer.plot()            
