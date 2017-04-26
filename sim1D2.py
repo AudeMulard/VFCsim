@@ -94,7 +94,8 @@ initialize(phi)
 
 #Velocity and pressure
 Q = 1. #rate of injection
-U = Q / (b*W)
+#U = Q / (b*W)
+U = 0.8 #if more, it gets unstable, I should change the time step
 xVelocity.constrain(U, mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
 pressureCorrection.constrain(0., mesh.facesLeft)
@@ -110,6 +111,23 @@ viewer2 = Viewer(vars = (phi, pressure, xVelocity))
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
+
+phi.updateOld()
+dexp = -5
+elapsed = 0.
+duration = 1000.
+
+#Phase
+
+
+while elapsed <duration:
+    dt = min(30, numerix.exp(dexp))
+    elapsed += dt
+    dexp += 0.01
+    eq.sweep(var=phi, dt = dt)
+    if __name__ == '__main__':
+        viewer.plot()
+    phi.updateOld()
 
 #Pressure and velocity
 pressureRelaxation = 0.8
@@ -146,11 +164,14 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     if sweep%10 == 0:
         viewer2.plot()
-           
+
+viewer.plot()
+"""
 phi.updateOld()
 dexp = -5
 elapsed = 0.
 duration = 1000.
+
 #Phase
 
 
@@ -164,11 +185,16 @@ while elapsed <duration:
     phi.updateOld()
 
 viewer.plot()
-
+"""
 
 timeStep = 1e-6
-
-for i in range(3):
+phi.updateOld()
+for i in range(1000):
+    res= 1e+10
+    while res > 1e-5:
+           res = eq.sweep(var=phi, dt=timeStep)
+    phi.updateOld()
+"""
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred values
         xVelocityEq.cacheMatrix()
@@ -202,6 +228,8 @@ for i in range(3):
         while res > 1e-5:
                res = eq.sweep(var=phi, dt=timeStep)        
 
+"""
 
-#viewer.plot()
+phi.updateOld()
+viewer.plot()
 viewer2.plot()
