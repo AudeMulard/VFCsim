@@ -108,26 +108,22 @@ pressureCorrection.constrain(0., mesh.facesLeft)
 viewer = Viewer(vars = (phi,xVelocity), datamin=-1., datamax=2.)
 viewer2 = Viewer(vars = (phi, pressure, xVelocity))
 
+
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
-phi.updateOld()
-dexp = -5
-elapsed = 0.
-duration = 1000.
-
 #Phase
-
-
-while elapsed <duration:
-    dt = min(30, numerix.exp(dexp))
-    elapsed += dt
-    dexp += 0.01
-    eq.sweep(var=phi, dt = dt)
-    if __name__ == '__main__':
-        viewer.plot()
+timeStep = 10
+for i in range(20):
     phi.updateOld()
+    res = 1e+10
+    while res > 1e-7:
+        res = eq.sweep(var=phi, dt=timeStep)
+
+if __name__ == '__main__':
+    viewer.plot()
+
 
 #Pressure and velocity
 pressureRelaxation = 0.8
@@ -165,7 +161,25 @@ for sweep in range(sweeps):
     if sweep%10 == 0:
         viewer2.plot()
 
+
 viewer.plot()
+
+x = mesh.cellCenters[0]    
+
+displacement = 10.
+#velocity1 = 1.
+timeStep = .1 * dx / U
+elapsed = 0.
+while elapsed < displacement/U:
+    phi.updateOld()
+    res = 1e+10
+    while res > 1e-5:
+        res = eq.sweep(var=phi, dt=timeStep)
+    elapsed +=timeStep
+    if __name__ == '__main__':
+        viewer.plot()
+
+
 """
 phi.updateOld()
 dexp = -5
@@ -185,7 +199,7 @@ while elapsed <duration:
     phi.updateOld()
 
 viewer.plot()
-"""
+
 
 timeStep = 1e-6
 phi.updateOld()
@@ -194,7 +208,7 @@ for i in range(1000):
     while res > 1e-5:
            res = eq.sweep(var=phi, dt=timeStep)
     phi.updateOld()
-"""
+
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred values
         xVelocityEq.cacheMatrix()
@@ -228,8 +242,9 @@ for i in range(1000):
         while res > 1e-5:
                res = eq.sweep(var=phi, dt=timeStep)        
 
-"""
+
 
 phi.updateOld()
 viewer.plot()
 viewer2.plot()
+"""

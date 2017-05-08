@@ -16,7 +16,7 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = L/dx*1000/4 #number of controle volume
+nx = 10 #number of controle volume
 #L = 1.0
 #N = 50
 #dL = L / N
@@ -29,6 +29,7 @@ velocityRelaxation = 0.5
 
 
 #mesh
+#mesh = Grid2D(nx=nx, ny=nx, dx=dx, dy=dx)
 mesh = Grid1D(nx=nx, dx=dx)
 
 #Variables
@@ -60,7 +61,7 @@ pressureCorrection.constrain(0., mesh.facesLeft)
 if __name__ == '__main__':
     viewer = Viewer(vars=(pressure, xVelocity))
 
-sweeps = 300
+sweeps = 80
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
@@ -71,7 +72,6 @@ for sweep in range(sweeps):
     xmat = xVelocityEq.matrix
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
-    #print(ap)
     #
     ##update the face velocities based on starred values with the Rhi-Chow correction
     #cell pressure gradient
@@ -93,9 +93,6 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-    if __name__ == '__main__':
-        if sweep%10 == 0:
-            print(xVelocity)
     if __name__ == '__main__':
             if sweep%10 == 0:
                 print 'sweep:',sweep,', x residual:',xres, ', p residual:', pres, ', continuity:', max(abs(rhs))
