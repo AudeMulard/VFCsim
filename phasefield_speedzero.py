@@ -74,10 +74,10 @@ def initialize(phi):
 
 initialize(phi)
 
-viewer = Viewer(vars=(phi,), datamin=0., datamax=1.5)
+viewer = Viewer(vars=(phi,), datamin=0., datamax=20.)
 
 
-timeStep = 10
+timeStep = 10.
 for i in range(20):
     phi.updateOld()
     res = 1e+10
@@ -89,52 +89,32 @@ if __name__ == '__main__':
 
 x = mesh.cellCenters[0]    
 U.setValue((3.,))
-displacement = 10.
-velocity1 = 1.
-timeStep = .1 * dx / velocity1
+displacement = 1.
+velocity1 = 3.
+timeStep = 0.1 * dx / velocity1
 elapsed = 0.
+
+phi.updateOld()
+res = 1e+10
+
+
+
+"""
+for i in range(10):
+    res = eq.sweep(var=phi, dt=timeStep)
+    print(res)
+    if i%3==0:
+        viewer.plot(filename="myimage %s .png" %{i})
+
+"""
+print(U)
+
 while elapsed < displacement/velocity1:
     phi.updateOld()
     res = 1e+10
-    while res > 1e-5:
+    while res > 1e-4:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
     if __name__ == '__main__':
         viewer.plot()
-
-"""
-dexp = -5
-elapsed = 0.
-duration = 1000.
-while elapsed < duration:
-    dt = min(100, numerix.exp(dexp))
-    elapsed += dt
-    dexp += 0.01
-    res=eq.sweep(var=phi, dt = dt)
-    if __name__ == '__main__':
-        viewer.plot()
-
-timeStep = 1e-6
-for i in range(10):
-    phase.updateOld()
-    res = 1e+10
-    while res > 1e-5:
-        res = eq.sweep(var=phase, dt=timeStep)
-
-if __name__ == '__main__':
-    viewer.plot()
-
-T.setValue(T() - 1)
-
-velocity = beta * abs(Tm - T())
-timeStep = .1 * dx / velocity
-elapsed = 0.
-while elapsed < displacement/velocity:
-    phase.updateOld()
-    res = 1e+10
-    while res > 1e-5:
-        res = eq.sweep(var=phase, dt=timeStep)
-    elapsed +=timeStep
-    if __name__ == '__main__':
-        viewer.plot()
-        """
+        print(U)

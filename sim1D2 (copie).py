@@ -28,7 +28,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1. #ratio of the two viscosities
+Mobility = 0.75 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -46,6 +46,7 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 
 #Order Parameter
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1)
+
 #New values
 beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi))
 #beta.setValue = beta1 * phi + beta2 * (1-phi)
@@ -55,8 +56,7 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi
 epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
-fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -95,18 +95,18 @@ initialize(phi)
 #Velocity and pressure
 Q = 1. #rate of injection
 #U = Q / (b*W)
-U = 1. #if more, it gets unstable, I should change the time step
-#xVelocity.constrain(U, where=mesh.facesRight | mesh.facesLeft)
+U = 0.8 #if more, it gets unstable, I should change the time step
+xVelocity.constrain(U, mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
-#pressureCorrection.constrain(0., mesh.facesLeft)
+pressureCorrection.constrain(0., mesh.facesLeft)
 
 #-----------------------------------------------------------------------
 #-------------------------------Viewers---------------------------------
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=-1., datamax=5.)
-viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
+viewer = Viewer(vars = (phi,xVelocity), datamin=-1., datamax=20.)
+viewer2 = Viewer(vars = (phi, pressure, xVelocity))
 
 
 #-----------------------------------------------------------------------
@@ -114,7 +114,7 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 #-----------------------------------------------------------------------
 
 #Phase
-timeStep = 10.
+timeStep = 10
 for i in range(20):
     phi.updateOld()
     res = 1e+10
@@ -128,9 +128,7 @@ if __name__ == '__main__':
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
-xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
-pressureCorrection.constrain(0., mesh.facesLeft)
+
 sweeps = 50
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
@@ -149,8 +147,6 @@ for sweep in range(sweeps):
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
     #velocity[..., mesh.exteriorFaces.value]=0.
     #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
-    velocity[0, mesh.facesLeft.value] = U
-    velocity[0, mesh.facesRight.value] = U
     #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
@@ -170,7 +166,7 @@ viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 200.
+displacement = 10.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -182,4 +178,36 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     if __name__ == '__main__':
         viewer.plot()
-        viewer2.plot()
+    for sweep in range(sweeps):
+        ##Solve the Stokes equations to get starred values
+        xVelocityEq.cacheMatrix()
+        xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
+        xmat = xVelocityEq.matrix
+        ##update the ap coefficient from the matrix diagonal
+        ap[:] = xmat.takeDiagonal()
+        #
+        ##update the face velocities based on starred values with the Rhi-Chow correction
+        #cell pressure gradient
+        presgrad = pressure.grad
+        #face pressure gradient
+        facepresgrad = _FaceGradVariable(pressure)
+        #
+        velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
+        #velocity[..., mesh.exteriorFaces.value]=0.
+        #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
+        velocity[0, mesh.facesLeft.value] = U
+        velocity[0, mesh.facesRight.value] = U
+        #
+        ##solve the pressure correction equation
+        pressureCorrectionEq.cacheRHSvector()
+        ## left bottom point must remain at pressure 0, so no correction
+        pres = pressureCorrectionEq.sweep(var=pressureCorrection)
+        rhs = pressureCorrectionEq.RHSvector
+        #
+        ## update the pressure using the corrected value
+        pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
+        ## update the velocity using the corrected pressure
+        xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+        if sweep%10 == 0:
+            viewer2.plot()
+
