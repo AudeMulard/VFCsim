@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """
 Created on Mon Apr 24 17:48:38 2017
 Simulation 1D
@@ -69,12 +70,10 @@ xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
 
 
 ap = CellVariable(mesh=mesh, value=1.)
-
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-
 X = mesh.cellCenters[0]
 pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
-print(mesh._cellDistances)
+
 #Remove oscillations
 from fipy.variables.faceGradVariable import _FaceGradVariable
 volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
@@ -96,7 +95,7 @@ initialize(phi)
 #Velocity and pressure
 Q = 1. #rate of injection
 #U = Q / (b*W)
-U = 1. #if more, it gets unstable, I should change the time step
+U = 0.8 #if more, it gets unstable, I should change the time step
 #xVelocity.constrain(U, where=mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
 #pressureCorrection.constrain(0., mesh.facesLeft)
@@ -106,14 +105,14 @@ X = mesh.faceCenters
 #-----------------------------------------------------------------------
 
 #Viewer
-#viewer = Viewer(vars = (phi,), datamin=-1., datamax=5.)
+viewer = Viewer(vars = (phi,), datamin=-1., datamax=5.)
 viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
-"""
+
 #Phase
 timeStep = 10.
 for i in range(20):
@@ -121,11 +120,10 @@ for i in range(20):
     res = 1e+10
     while res > 1e-7:
         res = eq.sweep(var=phi, dt=timeStep)
+    if __name__ == '__main__':
+        viewer.plot()
 
-if __name__ == '__main__':
-    viewer.plot()
 """
-
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
@@ -133,45 +131,6 @@ xVelocity.constrain(U, mesh.facesLeft)
 xVelocity.constrain(U, mesh.facesRight)
 pressureCorrection.constrain(0., mesh.facesLeft)
 sweeps = 50
-viewer2.plot()
-
-##Solve the Stokes equations to get starred values
-xVelocityEq.cacheMatrix()
-xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
-xmat = xVelocityEq.matrix
-##update the ap coefficient from the matrix diagonal
-ap[:] = xmat.takeDiagonal()
-#
-##update the face velocities based on starred values with the Rhi-Chow correction
-#cell pressure gradient
-presgrad = pressure.grad
-#face pressure gradient
-facepresgrad = _FaceGradVariable(pressure)
-#
-velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-#velocity[..., mesh.exteriorFaces.value]=0.
-#velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
-velocity[0, mesh.facesLeft.value] = U
-velocity[0, mesh.facesRight.value] = U
-#
-##solve the pressure correction equation
-pressureCorrectionEq.cacheRHSvector()
-## left bottom point must remain at pressure 0, so no correction
-pres = pressureCorrectionEq.sweep(var=pressureCorrection)
-pressureCorrection.constrain(0., mesh.facesLeft)
-print(pressureCorrection)
-rhs = pressureCorrectionEq.RHSvector
-#
-## update the pressure using the corrected value
-pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
-## update the velocity using the corrected pressure
-xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-print(pressureCorrection.grad[0])
-print(xVelocity)
-
-viewer2.plot()
-  
-"""
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
@@ -202,16 +161,17 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    xVelocity[0]=U
+    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
-
 
 
 viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 250.
+displacement = 2.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -224,4 +184,21 @@ while elapsed < displacement/U:
     if __name__ == '__main__':
         viewer.plot()
         viewer2.plot()
+        
+
+dexp = -5
+>>> elapsed = 0.
+>>> if __name__ == "__main__":
+...     duration = 1000.
+... else:
+...     duration = 1000.
+>>> while elapsed < duration:
+...     dt = min(100, numerix.exp(dexp))
+...     elapsed += dt
+...     dexp += 0.01
+...     eq.solve(phi, dt=dt, solver=LinearLUSolver())
+...     if __name__ == "__main__":
+...         viewer.plot()
+...     elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3) and elapsed > 10.:
+...         break
 """
