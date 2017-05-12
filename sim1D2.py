@@ -20,7 +20,7 @@ b = 1. #gap
 #Mesh
 dx = 0.25 #width of controle volume
 nx = 1000 #number of controle volume
-mesh = Grid1D(dx=dx, nx=nx)
+mesh = Grid2D(dx=dx, dy=dx, nx=nx, ny=nx)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -180,6 +180,6 @@ while elapsed < displacement/U:
     while res > 1e-5:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
-    if __name__ == '__main__':
-        viewer.plot()
+    if elapsed%10==0:
+        viewer.plot(filename="myimage %d .png" % elapsed)
         viewer2.plot()
