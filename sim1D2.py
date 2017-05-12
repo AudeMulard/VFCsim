@@ -95,7 +95,7 @@ initialize(phi)
 #Velocity and pressure
 Q = 1. #rate of injection
 #U = Q / (b*W)
-U = 1. #if more, it gets unstable, I should change the time step
+U = 0.8 #if more, it gets unstable, I should change the time step
 #xVelocity.constrain(U, where=mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
 #pressureCorrection.constrain(0., mesh.facesLeft)
@@ -162,6 +162,8 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    xVelocity[0]=U
+    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
@@ -183,3 +185,20 @@ while elapsed < displacement/U:
     if elapsed%10==0:
         viewer.plot(filename="myimage %d .png" % elapsed)
         viewer2.plot()
+"""
+dexp = -5
+>>> elapsed = 0.
+>>> if __name__ == "__main__":
+...     duration = 1000.
+... else:
+...     duration = 1000.
+>>> while elapsed < duration:
+...     dt = min(100, numerix.exp(dexp))
+...     elapsed += dt
+...     dexp += 0.01
+...     eq.solve(phi, dt=dt, solver=LinearLUSolver())
+...     if __name__ == "__main__":
+...         viewer.plot()
+...     elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3) and elapsed > 10.:
+...         break
+"""
