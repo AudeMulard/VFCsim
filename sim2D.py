@@ -105,8 +105,8 @@ X = mesh.faceCenters
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=-1., datamax=5.)
-viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
+viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
+#viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
 
 
 #-----------------------------------------------------------------------
@@ -167,15 +167,15 @@ for sweep in range(sweeps):
     xVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     xVelocity[nx-1]=U
-    if sweep%10 == 0:
-        viewer2.plot()
+#    if sweep%10 == 0:
+#        viewer2.plot()
 
 
 viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 2.
+displacement = 125.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -186,6 +186,5 @@ while elapsed < displacement/U:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
     if __name__ == '__main__':
-        viewer.plot()
-        viewer2.plot()
+        viewer.plot(filename="myimage %d .png" % elapsed)
         
