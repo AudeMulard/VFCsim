@@ -20,7 +20,7 @@ b = 1. #gap
 #Mesh
 dx = 0.25 #width of controle volume
 nx = 1000 #number of controle volume
-mesh = Grid2D(dx=dx, dy=dx, nx=nx, ny=nx)
+mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -56,7 +56,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+#phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -172,7 +172,7 @@ viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 200.
+displacement = 10.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -183,7 +183,7 @@ while elapsed < displacement/U:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
     if elapsed%10==0:
-        viewer.plot(filename="myimage %d .png" % elapsed)
+        viewer.plot()
         viewer2.plot()
 """
 dexp = -5

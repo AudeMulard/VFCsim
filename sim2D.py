@@ -148,7 +148,7 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-    velocity[1] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
+    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     #velocity[..., mesh.exteriorFaces.value]=0.
     #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
     #velocity[0, mesh.facesLeft.value] = U
@@ -164,7 +164,7 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-    xVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
+    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     xVelocity[nx-1]=U
 #    if sweep%10 == 0:
