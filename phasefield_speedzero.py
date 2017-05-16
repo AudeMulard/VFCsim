@@ -88,7 +88,9 @@ if __name__ == '__main__':
     viewer.plot()
 
 x = mesh.cellCenters[0]    
-U.setValue((3.,))
+#U.setValue((3.,))
+
+U.faceGrad.constrain(2 * mesh.faceNormals, where=mesh.exteriorFaces)
 displacement = 1.
 velocity1 = 3.
 timeStep = 0.1 * dx / velocity1

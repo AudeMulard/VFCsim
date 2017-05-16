@@ -28,7 +28,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1. #ratio of the two viscosities
+Mobility = 0.75 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -56,7 +56,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-#phi.constrain(1., mesh.facesRight)
+phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -86,9 +86,11 @@ contrvolume=volume.arithmeticFaceValue
 #Phase
 x = mesh.cellCenters[0]
 def initialize(phi):
-	phi.setValue(0.)
-	phi.setValue(1., where=x > nx*dx/2)
+#    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-epsilon/2) | (x < nx*dx/2+epsilon/2))
+    phi.setValue(1., where=x > nx*dx/2+epsilon*3)
+    phi.setValue(0., where=x < nx*dx/2-epsilon*3)
 
+    
 initialize(phi)
 
 
@@ -105,7 +107,7 @@ X = mesh.faceCenters
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=-1., datamax=5.)
+viewer = Viewer(vars = (phi,), datamin=-1., datamax=2.)
 viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 
@@ -121,9 +123,13 @@ for i in range(20):
     while res > 1e-7:
         res = eq.sweep(var=phi, dt=timeStep)
 
-if __name__ == '__main__':
-    viewer.plot()
 
+
+if __name__ == '__main__':
+    viewer.plot()       
+
+
+#phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 #Pressure and velocity
 pressureRelaxation = 0.8
@@ -172,7 +178,7 @@ viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 10.
+displacement = 2.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -182,23 +188,5 @@ while elapsed < displacement/U:
     while res > 1e-5:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
-    if elapsed%10==0:
-        viewer.plot()
-        viewer2.plot()
-"""
-dexp = -5
->>> elapsed = 0.
->>> if __name__ == "__main__":
-...     duration = 1000.
-... else:
-...     duration = 1000.
->>> while elapsed < duration:
-...     dt = min(100, numerix.exp(dexp))
-...     elapsed += dt
-...     dexp += 0.01
-...     eq.solve(phi, dt=dt, solver=LinearLUSolver())
-...     if __name__ == "__main__":
-...         viewer.plot()
-...     elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3) and elapsed > 10.:
-...         break
-"""
+    viewer.plot()
+    viewer2.plot()

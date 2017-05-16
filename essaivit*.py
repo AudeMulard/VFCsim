@@ -56,7 +56,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+#phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -91,7 +91,8 @@ def initialize(phi):
 
 initialize(phi)
 
-
+xVelocity.faceGrad.constrain(U * mesh.faceNormals, where=mesh.facesRight)
+xVelocity.faceGrad.constrain(U * mesh.faceNormals, where=mesh.facesLeft)
 #Velocity and pressure
 Q = 1. #rate of injection
 #U = Q / (b*W)
@@ -123,12 +124,12 @@ for i in range(20):
     if __name__ == '__main__':
         viewer.plot()
 
-"""
+
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
-xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
+#xVelocity.constrain(U, mesh.facesLeft)
+#xVelocity.constrain(U, mesh.facesRight)
 pressureCorrection.constrain(0., mesh.facesLeft)
 sweeps = 50
 for sweep in range(sweeps):
@@ -184,7 +185,7 @@ while elapsed < displacement/U:
     if __name__ == '__main__':
         viewer.plot()
         viewer2.plot()
-        
+"""        
 
 dexp = -5
 >>> elapsed = 0.

@@ -97,6 +97,9 @@ Q = 1. #rate of injection
 #U = Q / (b*W)
 U = 0.8 #if more, it gets unstable, I should change the time step
 xVelocity.constrain(U, mesh.facesRight | mesh.facesLeft)
+xVelocity[0]=U
+xVelocity[nx-1]=U
+#xVelocity.faceGrad.constrain(0.8 * mesh.faceNormals, where=mesh.exteriorFaces)
 X = mesh.faceCenters
 pressureCorrection.constrain(0., mesh.facesLeft)
 
@@ -105,8 +108,8 @@ pressureCorrection.constrain(0., mesh.facesLeft)
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,xVelocity), datamin=-1., datamax=20.)
-viewer2 = Viewer(vars = (phi, pressure, xVelocity))
+viewer = Viewer(vars = (phi), datamin=-1., datamax=20.)
+viewer2 = Viewer(vars = (xVelocity))
 
 
 #-----------------------------------------------------------------------
@@ -158,12 +161,14 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    xVelocity[0]=U
+    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
 
 viewer.plot()
-
+"""
 x = mesh.cellCenters[0]    
 
 displacement = 10.
@@ -208,6 +213,9 @@ while elapsed < displacement/U:
         pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+        xVelocity[0]=U
+        xVelocity[nx-1]=U
         if sweep%10 == 0:
             viewer2.plot()
 
+"""
