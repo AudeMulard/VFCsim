@@ -169,7 +169,7 @@ for sweep in range(sweeps):
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
+#    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
@@ -178,7 +178,7 @@ viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 2.
+displacement = 125.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
