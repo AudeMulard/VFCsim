@@ -127,6 +127,7 @@ for i in range(20):
     if __name__ == '__main__':
         viewer.plot()
 
+
 """
 #Pressure and velocity
 pressureRelaxation = 0.8
