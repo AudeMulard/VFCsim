@@ -97,7 +97,7 @@ initialize(phi)
 #Velocity and pressure
 Q = 1. #rate of injection
 #U = Q / (b*W)
-U = 0.8 #if more, it gets unstable, I should change the time step
+U = -0.8 #if more, it gets unstable, I should change the time step
 #xVelocity.constrain(U, where=mesh.facesRight | mesh.facesLeft)
 X = mesh.faceCenters
 #pressureCorrection.constrain(0., mesh.facesLeft)
@@ -124,11 +124,10 @@ for i in range(20):
         res = eq.sweep(var=phi, dt=timeStep)
 
 
-
 if __name__ == '__main__':
     viewer.plot()       
 
-TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
+#TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
 
 #phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
@@ -181,9 +180,9 @@ x = mesh.cellCenters[0]
 
 displacement = 125.
 #velocity1 = 1.
-timeStep = .1 * dx / U
+timeStep = .1 * dx / -U
 elapsed = 0.
-while elapsed < displacement/U:
+while elapsed < displacement/-U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-5:
