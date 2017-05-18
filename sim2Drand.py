@@ -91,7 +91,7 @@ x = mesh.cellCenters[0]
 def initialize(phi):
     phi.setValue(0.)
     phi.setValue(1., where=x > nx*dx/2)
-    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
+#    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 
 initialize(phi)
@@ -118,6 +118,10 @@ viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
+timeStep = 10.
+res = eq.sweep(var=phi, dt=timeStep)
+TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
+"""
 #Phase
 timeStep = 10.
 for i in range(20):
@@ -128,8 +132,6 @@ for i in range(20):
     if __name__ == '__main__':
         viewer.plot()
 
-
-"""
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
