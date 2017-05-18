@@ -30,7 +30,7 @@ mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.75 #ratio of the two viscosities
+Mobility = 1. #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -123,7 +123,7 @@ for i in range(20):
     phi.updateOld()
     res = 1e+10
     while res > 1e-7:
-        res = eq.sweep(var=phi, dt=timeStep)
+        res = eq.sweep(var=phi, dt=timeStep, solver=GeneralSolver(iterations=2000, tolerance=1e-15))
     if __name__ == '__main__':
         viewer.plot()
 
