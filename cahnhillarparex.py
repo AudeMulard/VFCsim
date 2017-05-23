@@ -38,7 +38,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(phi, dt=dt, solver=LinearLUSolver())
+    eq.solve(phi, dt=dt)
     if __name__ == '__main__':
         veiwer.plot()
     elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3):
