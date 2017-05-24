@@ -19,10 +19,8 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-dy = 2.5
-nx = 1000
-ny = 100 #number of controle volume
-mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
+dy = 2.5 #number of controle volume
+mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -30,7 +28,7 @@ mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.1 #ratio of the two viscosities
+Mobility = 1. #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1

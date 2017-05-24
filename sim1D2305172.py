@@ -1,13 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon May 22 12:03:58 2017
+Created on Tue May 23 16:56:58 2017
 
 @author: aude
 """
 
 from fipy import *
-import random
+
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -19,10 +19,8 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-dy = 2.5
-nx = 1000
-ny = 100 #number of controle volume
-mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
+nx = 1000 #number of controle volume
+mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -30,7 +28,7 @@ mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.1 #ratio of the two viscosities
+Mobility = 0.75 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -40,7 +38,6 @@ beta2 = viscosity2 / permeability2
 pressure = CellVariable(mesh=mesh, name='pressure')
 pressureCorrection = CellVariable(mesh=mesh)
 xVelocity = CellVariable(mesh=mesh, name='X Velocity')
-yVelocity = CellVariable(mesh=mesh, name='Y Velocity')
 velocity = FaceVariable(mesh=mesh, rank=1)
 
 #-----------------------------------------------------------------------
@@ -51,6 +48,7 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1)
 #New values
 beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi))
+#beta.setValue = beta1 * phi + beta2 * (1-phi)
 
 #Parameters
 #Cahn_number = 0.001
@@ -58,7 +56,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+#phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -68,8 +66,8 @@ eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) 
 #-------------------------Velocity and pressure-------------------------
 #-----------------------------------------------------------------------
 
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad.dot([1.,0.]))
-yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad.dot([0.,1.]))
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
+
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
@@ -86,23 +84,15 @@ contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 
 #Phase
-x, y = mesh.cellCenters
-"""
+x = mesh.cellCenters[0]
 def initialize(phi):
-    phi.setValue(0.)
-    phi.setValue(1., where=x > nx*dx/2)
-    for i in range(ny):
-        a = random.gauss(0.5, 0.5)
-        phi.setValue(a, where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon) & (y > i*ny))
-"""
-def initialize(phi):
-    phi.setValue(0.)
-    phi.setValue(1., where=x > nx*dx/2)
-    a = random.gauss(0.5, 0.01)
-    phi.setValue(a, where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
+#    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-epsilon/2) | (x < nx*dx/2+epsilon/2))
+    phi.setValue(0., where=x > nx*dx/2)
+    phi.setValue(1., where=x < nx*dx/2)
 
+    
 initialize(phi)
-
+phi.faceGrad.constrain([0], mesh.facesLeft)
 
 #Velocity and pressure
 Q = 1. #rate of injection
@@ -117,22 +107,14 @@ X = mesh.faceCenters
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
-#viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
+viewer = Viewer(vars = (phi,), datamin=-1., datamax=2.)
+viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
-timeStep = 10.
-
-phi.updateOld()
-res = 1e+10
-eq.sweep(var=phi, dt=timeStep)
-   
-
-"""
 #Phase
 timeStep = 10.
 for i in range(20):
@@ -140,26 +122,26 @@ for i in range(20):
     res = 1e+10
     while res > 1e-7:
         res = eq.sweep(var=phi, dt=timeStep)
-    if __name__ == '__main__':
-        viewer.plot()
 
 
+if __name__ == '__main__':
+    viewer.plot()       
 
 
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
-X, Y = mesh.faceCenters
 xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
+#xVelocity.constrain(U, mesh.facesRight)
 pressureCorrection.constrain(0., mesh.facesLeft)
 sweeps = 50
+print(xVelocity)
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
-    yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
+    print(xVelocity)
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
     #
@@ -170,11 +152,10 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     #velocity[..., mesh.exteriorFaces.value]=0.
     #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
-    #velocity[0, mesh.facesLeft.value] = U
-    #velocity[0, mesh.facesRight.value] = U
+    velocity[0, mesh.facesLeft.value] = U
+#    velocity[0, mesh.facesRight.value] = U
     #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
@@ -186,13 +167,16 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
+    print(xVelocity)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
+#    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
+print(xVelocity)
+raw_input("pause")
 
+"""
 viewer.plot()
 
 x = mesh.cellCenters[0]    
@@ -201,12 +185,14 @@ displacement = 125.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
+
 while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-5:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
-    if __name__ == '__main__':
-        viewer.plot(filename="myimage %d .png" % elapsed)
-  """      
+    viewer.plot()
+    viewer2.plot()
+
+"""

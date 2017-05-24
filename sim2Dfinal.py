@@ -191,4 +191,5 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     if __name__ == '__main__':
         viewer.plot(filename="myimage %d .png" % elapsed)
-        
+
+raw_input("finished")
