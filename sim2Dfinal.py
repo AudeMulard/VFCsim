@@ -90,7 +90,7 @@ x = mesh.cellCenters[0]
 def initialize(phi):
     phi.setValue(0.)
     phi.setValue(1., where=x > nx*dx/2)
-    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
+#    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 
 initialize(phi)
@@ -128,7 +128,6 @@ for i in range(20):
         viewer.plot()
 
 
-"""
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
@@ -192,5 +191,5 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     if __name__ == '__main__':
         viewer.plot(filename="myimage %d .png" % elapsed)
-        
-"""
+
+raw_input("finished")

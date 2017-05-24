@@ -1,3 +1,5 @@
+date > chrono1
+cat chrono1 >> chrono2
 python cahnhillarparex.py
 date > chrono1
 cat chrono1 >> chrono2

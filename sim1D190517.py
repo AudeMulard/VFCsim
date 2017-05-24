@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 24 17:48:38 2017
-Simulation 1D
-@author: am2548
+Created on Fri May 19 11:39:23 2017
+
+@author: aude
 """
+
 
 from fipy import *
 
@@ -56,7 +57,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+#phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -87,8 +88,8 @@ contrvolume=volume.arithmeticFaceValue
 x = mesh.cellCenters[0]
 def initialize(phi):
 #    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-epsilon/2) | (x < nx*dx/2+epsilon/2))
-    phi.setValue(1., where=x > nx*dx/2+epsilon*3)
-    phi.setValue(0., where=x < nx*dx/2-epsilon*3)
+    phi.setValue(1., where=x > nx*dx/2)
+    phi.setValue(0., where=x < nx*dx/2)
 
     
 initialize(phi)
@@ -169,7 +170,7 @@ for sweep in range(sweeps):
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-#    xVelocity[nx-1]=U
+    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
@@ -182,6 +183,7 @@ displacement = 125.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
+
 while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
@@ -190,3 +192,5 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
+    if elapsed%10 == 0:
+        TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne %d.tsv" % elapsed)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 24 17:48:38 2017
-Simulation 1D
-@author: am2548
+Created on Tue May 23 16:56:58 2017
+
+@author: aude
 """
 
 from fipy import *
@@ -56,7 +56,7 @@ epsilon = 1.
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+#phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -87,12 +87,12 @@ contrvolume=volume.arithmeticFaceValue
 x = mesh.cellCenters[0]
 def initialize(phi):
 #    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-epsilon/2) | (x < nx*dx/2+epsilon/2))
-    phi.setValue(1., where=x > nx*dx/2+epsilon*3)
-    phi.setValue(0., where=x < nx*dx/2-epsilon*3)
+    phi.setValue(0., where=x > nx*dx/2)
+    phi.setValue(1., where=x < nx*dx/2)
 
     
 initialize(phi)
-
+phi.faceGrad.constrain([0], mesh.facesLeft)
 
 #Velocity and pressure
 Q = 1. #rate of injection
@@ -127,22 +127,21 @@ for i in range(20):
 if __name__ == '__main__':
     viewer.plot()       
 
-#TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
-
-#phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
+#xVelocity.constrain(U, mesh.facesRight)
 pressureCorrection.constrain(0., mesh.facesLeft)
 sweeps = 50
+print(xVelocity)
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
+    print(xVelocity)
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
     #
@@ -156,7 +155,7 @@ for sweep in range(sweeps):
     #velocity[..., mesh.exteriorFaces.value]=0.
     #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
     velocity[0, mesh.facesLeft.value] = U
-    velocity[0, mesh.facesRight.value] = U
+#    velocity[0, mesh.facesRight.value] = U
     #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
@@ -168,12 +167,16 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    print(xVelocity)
     xVelocity[0]=U
 #    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
+print(xVelocity)
+raw_input("pause")
 
+"""
 viewer.plot()
 
 x = mesh.cellCenters[0]    
@@ -182,6 +185,7 @@ displacement = 125.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
+
 while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
@@ -190,3 +194,5 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
+
+"""
