@@ -21,7 +21,7 @@ phi.setValue(GaussianNoiseVariable(mesh=mesh,
                                    variance=0.01))
 
 if __name__ == '__main__':
-    veiwer = Viewer(vars=(phi,), datamin=0., datamax=1.)
+    viewer = Viewer(vars=(phi,), datamin=0., datamax=1.)
 
 PHI = phi.arithmeticFaceValue
 D = a = epsilon = 1.
@@ -38,10 +38,12 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(phi, dt=dt, solver=LinearLUSolver())
+    eq.solve(phi, dt=dt)
     if __name__ == '__main__':
-        veiwer.plot()
+        viewer.plot()
     elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3):
         break
+
+viewer.plot(filename="myImage.png")
 
 print(max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3)
