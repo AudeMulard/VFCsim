@@ -7,6 +7,7 @@ Created on Tue May 23 16:56:58 2017
 """
 
 from fipy import *
+import random
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
@@ -89,6 +90,9 @@ def initialize(phi):
 #    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-epsilon/2) | (x < nx*dx/2+epsilon/2))
     phi.setValue(1., where=x > nx*dx/2)
     phi.setValue(0., where=x < nx*dx/2)
+    a = random.gauss(0.5, 0.01)
+    phi.setValue(a, where=(x > nx*dx/2-5*epsilon) & (x < nx*dx/2+5*epsilon))
+
 
     
 initialize(phi)
@@ -117,7 +121,7 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 #Phase
 timeStep = 10.
-for i in range(20):
+for i in range(200):
     phi.updateOld()
     res = 1e+10
     while res > 1e-7:
@@ -126,9 +130,12 @@ for i in range(20):
 
 if __name__ == '__main__':
     viewer.plot()       
-print(phi[499])
-#TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
+
+print(phi[500])
+
 """
+#TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
+
 #phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 #Pressure and velocity
@@ -193,4 +200,5 @@ while elapsed < displacement/U:
     viewer2.plot()
     if elapsed%10 == 0:
         TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne %d.tsv" % elapsed)
-   """
+
+"""
