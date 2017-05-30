@@ -8,6 +8,7 @@ Created on Thu May 18 10:05:51 2017
 
 
 from fipy import *
+import random
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
@@ -20,9 +21,9 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-dy = 2.5
-nx = 1000
-ny = 100 #number of controle volume
+dy = 0.10
+nx = 100
+ny = 250 #number of controle volume
 mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -31,7 +32,7 @@ mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.75 #ratio of the two viscosities
+Mobility = 0.1 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -55,11 +56,11 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi
 
 #Parameters
 #Cahn_number = 0.001
-epsilon = 1.
+epsilon = 0.3
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
-phi.constrain(1., mesh.facesRight)
+phi.faceGrad.constrain([0.], mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
@@ -87,11 +88,18 @@ contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 
 #Phase
-x = mesh.cellCenters[0]
+x,y = mesh.cellCenters
 def initialize(phi):
     phi.setValue(0.)
-    phi.setValue(1., where=x > nx*dx/2)
-#    phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
+    for i in range(ny):
+        a = random.gauss(0.5, 0.01)
+        phi.setValue(1., where=(x > nx*dx * a ) & (y<(i+1)*dy) & (y>(i*dy)))
+    
+    
+#    a = random.gauss(0.5, 0.01)
+#    phi.setValue(a, where=(x > nx*dx/2-5*epsilon) & (x < nx*dx/2+5*epsilon))
+
+
 
 
 initialize(phi)
@@ -110,18 +118,15 @@ X = mesh.faceCenters
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
+#viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
 #viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
-
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
-timeStep = 10.
-res = eq.sweep(var=phi, dt=timeStep)
-TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
-"""
+
+
 #Phase
 timeStep = 10.
 for i in range(20):
@@ -129,9 +134,12 @@ for i in range(20):
     res = 1e+10
     while res > 1e-7:
         res = eq.sweep(var=phi, dt=timeStep)
-    if __name__ == '__main__':
-        viewer.plot()
 
+
+"""
+if __name__ == '__main__':
+    viewer.plot()
+"""
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
@@ -175,11 +183,11 @@ for sweep in range(sweeps):
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     xVelocity[nx-1]=U
-    if sweep%10 == 0:
-        viewer2.plot()
+#    if sweep%10 == 0:
+#        viewer2.plot()
 
 
-viewer.plot()
+
 
 x = mesh.cellCenters[0]    
 
@@ -193,7 +201,8 @@ while elapsed < displacement/U:
     while res > 1e-5:
         res = eq.sweep(var=phi, dt=timeStep)
     elapsed +=timeStep
-    if __name__ == '__main__':
-        viewer.plot(filename="myimage %d .png" % elapsed)
-        
-"""
+
+
+viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
+viewer.plot()    
+raw_input("pause")
