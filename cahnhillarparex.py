@@ -20,8 +20,7 @@ phi.setValue(GaussianNoiseVariable(mesh=mesh,
                                    mean=0.5,
                                    variance=0.01))
 
-if __name__ == '__main__':
-    viewer = Viewer(vars=(phi,), datamin=0., datamax=1.)
+
 
 PHI = phi.arithmeticFaceValue
 D = a = epsilon = 1.
@@ -39,11 +38,17 @@ while elapsed < duration:
     elapsed += dt
     dexp += 0.01
     eq.solve(phi, dt=dt)
-    if __name__ == '__main__':
-        viewer.plot()
-    elif (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3):
+#    if __name__ == '__main__':
+#        viewer.plot()
+    if (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3):
         break
 
-viewer.plot(filename="myImage.png")
+
+
+if __name__ == '__main__':
+    viewer = Viewer(vars=(phi,), datamin=0., datamax=1.)
+    viewer.plot(filename="myImage.png")
 
 print(max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3)
+
+raw_input("pause")
