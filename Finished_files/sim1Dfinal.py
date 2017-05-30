@@ -28,7 +28,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.75 #ratio of the two viscosities
+Mobility = 0.1 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -47,7 +47,7 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 #Order Parameter
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1)
 #New values
-beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi))
+beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1-phi))
 #beta.setValue = beta1 * phi + beta2 * (1-phi)
 
 #Parameters
@@ -122,13 +122,11 @@ for i in range(20):
     res = 1e+10
     while res > 1e-7:
         res = eq.sweep(var=phi, dt=timeStep)
+    if __name__ == '__main__':
+        viewer.plot()       
 
-
-if __name__ == '__main__':
-    viewer.plot()       
-print(phi[499])
 #TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
-"""
+
 #phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
 
 #Pressure and velocity
@@ -191,6 +189,3 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
-    if elapsed%10 == 0:
-        TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne %d.tsv" % elapsed)
-   """

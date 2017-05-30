@@ -52,11 +52,11 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 #Order Parameter
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1)
 #New values
-beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi))
+beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1-phi))
 
 #Parameters
 #Cahn_number = 0.001
-epsilon = 0.3
+epsilon = 0.1
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
