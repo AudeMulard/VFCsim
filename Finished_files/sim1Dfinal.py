@@ -117,10 +117,10 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 #Phase
 timeStep = 10.
-for i in range(20):
+for i in range(50):
     phi.updateOld()
     res = 1e+10
-    while res > 1e-7:
+    while res > 1e-10:
         res = eq.sweep(var=phi, dt=timeStep)
     if __name__ == '__main__':
         viewer.plot()       
@@ -128,7 +128,7 @@ for i in range(20):
 #TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
 
 #phi.setValue(GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01), where=(x > nx*dx/2-3*epsilon) & (x < nx*dx/2+3*epsilon))
-
+"""
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
@@ -189,3 +189,6 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
+"""
+
+raw_input("pause")
