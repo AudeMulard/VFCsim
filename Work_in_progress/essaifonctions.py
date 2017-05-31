@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 23 16:56:58 2017
+Created on Wed May 31 08:46:58 2017
 
 @author: aude
 """
+
 
 from fipy import *
 
@@ -117,13 +118,18 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 #Phase
 timeStep = 10.
-for i in range(50):
+
+    
+def updatephi():
     phi.updateOld()
     res = 1e+10
     while res > 1e-10:
-        res = eq.sweep(var=phi, dt=timeStep)
-    if __name__ == '__main__':
-        viewer.plot()       
+        res = eq.sweep(var=phi, dt=timeStep)    
+
+
+for i in range(50):
+    updatephi()
+
 
 #TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
 
@@ -133,10 +139,12 @@ for i in range(50):
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
-pressureCorrection.constrain(0., mesh.facesLeft)
-sweeps = 50
-for sweep in range(sweeps):
+#xVelocity.constrain(U, mesh.facesRight)
+pressureCorrection.constrain(0., mesh.facesRight)
+sweeps = 10
+
+    
+def velopres():
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
@@ -167,11 +175,14 @@ for sweep in range(sweeps):
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
-    if sweep%10 == 0:
-        viewer2.plot()
+#    xVelocity[nx-1]=U
 
-"""
+for sweep in range(sweeps):
+    velopres()
+
+viewer2.plot()
+
+
 viewer.plot()
 
 x = mesh.cellCenters[0]    
@@ -182,13 +193,12 @@ timeStep = .1 * dx / U
 elapsed = 0.
 
 while elapsed < displacement/U:
-    phi.updateOld()
-    res = 1e+10
-    while res > 1e-5:
-        res = eq.sweep(var=phi, dt=timeStep)
+    updatephi()
     elapsed +=timeStep
+    for sweep in range(sweeps):
+        velopres()
     viewer.plot()
     viewer2.plot()
-"""
+
 
 raw_input("pause")
