@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 23 16:56:58 2017
+Created on Wed May 31 14:46:52 2017
 
 @author: aude
 """
+
+
 
 from fipy import *
 
@@ -19,7 +21,7 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = 1000 #number of controle volume
+nx = 100 #number of controle volume
 mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
@@ -52,7 +54,7 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1-phi
 
 #Parameters
 #Cahn_number = 0.001
-epsilon = 1.
+epsilon = 0.1
 M = Mobility * epsilon**2
 l = 1.
 fluxRight=1.
@@ -65,8 +67,8 @@ eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) 
 #-----------------------------------------------------------------------
 #-------------------------Velocity and pressure-------------------------
 #-----------------------------------------------------------------------
-
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
+alpha=CellVariable(mesh=mesh, name='alpha', value = (1-phi))
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0] - ImplicitSourceTerm(coeff=alpha))
 
 
 ap = CellVariable(mesh=mesh, value=1.)
@@ -117,13 +119,19 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 #Phase
 timeStep = 10.
-for i in range(50):
+
+    
+def updatephi():
     phi.updateOld()
     res = 1e+10
     while res > 1e-10:
         res = eq.sweep(var=phi, dt=timeStep)
-    if __name__ == '__main__':
-        viewer.plot()       
+    viewer.plot()
+
+
+for i in range(20):
+    updatephi()
+
 
 #TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
 
@@ -133,10 +141,12 @@ for i in range(50):
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
-pressureCorrection.constrain(0., mesh.facesLeft)
-sweeps = 50
-for sweep in range(sweeps):
+#xVelocity.constrain(U, mesh.facesRight)
+pressureCorrection.constrain(0., mesh.facesRight)
+sweeps = 10
+
+    
+def velopres():
     ##Solve the Stokes equations to get starred values
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
@@ -167,26 +177,26 @@ for sweep in range(sweeps):
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
-    if sweep%10 == 0:
-        viewer2.plot()
+#    xVelocity[nx-1]=U
+
+
+viewer2.plot()
 
 
 viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 125.
+displacement = 12.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
 
 while elapsed < displacement/U:
-    phi.updateOld()
-    res = 1e+10
-    while res > 1e-5:
-        res = eq.sweep(var=phi, dt=timeStep)
+    updatephi()
     elapsed +=timeStep
+    for sweep in range(sweeps):
+        velopres()
     viewer.plot()
     viewer2.plot()
 

@@ -49,9 +49,8 @@ beta2 = - viscosity2 / permeability2
 #-----------------------------------------------------------------------
 
 #Order Parameter
-#x = mesh.cellCenters[0]
 phi = CellVariable(name=r'$\phi$', mesh=mesh)
-#phi = CellVariable(name=r'$\phi$', mesh=mesh, value =GaussianNoiseVariable(mesh=mesh, mean=0.5, variance=0.01))
+
 #New values
 beta = Variable(name='beta', value = beta1 * phi + beta2 * (1.-phi))
 
@@ -59,17 +58,10 @@ beta = Variable(name='beta', value = beta1 * phi + beta2 * (1.-phi))
 #Cahn_number = 0.001
 #epsilon = Cahn_number * W
 
-
-
-
-#Cahn-Hilliard equationimport numpy
+#Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
 ## blows up when mobility is between 2.2 and 2.3 and 0.7 and 0.8, while l and epsilon=1
-#D = 10.
-#a = 1.
-#coeff1=D * a**2 *(1-6*PHI *(1-PHI))
-#eq = (TransientTerm() == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(D, epsilon**2)))
 eq = (TransientTerm()  == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
