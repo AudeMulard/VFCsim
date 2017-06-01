@@ -40,7 +40,7 @@ while elapsed < duration:
     eq.solve(phi, dt=dt)
 #    if __name__ == '__main__':
 #        viewer.plot()
-    if (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3):
+    if (max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3) and elapsed > 10.:
         break
 
 
@@ -49,6 +49,6 @@ if __name__ == '__main__':
     viewer = Viewer(vars=(phi,), datamin=0., datamax=1.)
     viewer.plot(filename="myImage.png")
 
-print(max(phi.globalValue) > 0.7) and (min(phi.globalValue) < 0.3)
+print(max(phi.globalValue) > 1.) and (min(phi.globalValue) < 0.)
 
 raw_input("pause")

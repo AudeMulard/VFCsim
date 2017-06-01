@@ -19,7 +19,7 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = 1000 #number of controle volume
+nx = 100 #number of controle volume
 mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
