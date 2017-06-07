@@ -1,13 +1,20 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 24 17:48:38 2017
-Simulation 1D
-@author: am2548
+Created on Mon Jun  5 10:47:17 2017
+
+@author: aude
+
+Sim1Davec updtae de la vitesse à chaque pas 
 """
 
 from fipy import *
 
+
+U = 0.8
+Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon =1. #code starts going crazy below epsilon=0.1
+l = 1. #this is lambda from Hamouda's paper
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -28,9 +35,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon =1. #code starts going crazy below epsilon=0.1
-l = 1. #this is lambda from Hamouda's paper
+
 M = Mobility * epsilon**2 #M in Hamouda's paper
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
@@ -53,14 +58,11 @@ phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1.)
 #New values
 beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1.-phi))
 
-#Parameters
-#Cahn_number = 0.001
-#epsilon = Cahn_number * W
-
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
 coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
 ## blows up when mobility is between 2.2 and 2.3 and 0.7 and 0.8, while l and epsilon=1
+
 eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
 
 #-----------------------------------------------------------------------
@@ -127,25 +129,19 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    res = eq.sweep(var=phi, dt = dt)
+    eq.solve(var=phi, dt = dt)
     if __name__ == '__main__':
         viewer.plot()
-#    print(res)
+
  
 
-viewer.plot(filename="myImage")
+
 #Pressure and velocity
-#Velocity and pressure
-Q = 1. #rate of injection
-#U = Q / (b*W)
-U = 1. #if more, it gets unstable, I should change the time step
-X = mesh.faceCenters
-#pressureCorrection.constrain(0., mesh.facesLeft)
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
 pressureCorrection.constrain(0., mesh.facesRight)
-"""
+
 sweeps = 41
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred value
@@ -162,38 +158,59 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-    #velocity[..., mesh.exteriorFaces.value]=0.
-    #velocity[0].constrain(U, mesh.facesRight | mesh.facesLeft)
     velocity[0, mesh.facesLeft.value] = U
     velocity[0, mesh.facesRight.value] = U
-    #
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
-    ## left bottom point must remain at pressure 0, so no correction
     pres = pressureCorrectionEq.sweep(var=pressureCorrection)
     rhs = pressureCorrectionEq.RHSvector
-    #
     ## update the pressure using the corrected value
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-#    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 #        print 'sweep:',sweep,', x residual:',xres, ', p residual:',pres, ', continuity:',max(abs(rhs))
 
-displacement = 125.
-timeStep = 0.1* dx / U
+displacement = 50.
+timeStep = 0.1 * dx / U #less than one space step per time step
 elapsed = 0.
 
 while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
-    while res > 1e-10:
+    while res > 1e-6:
         res = eq.sweep(var=phi, dt=timeStep)
+    for sweep in range(sweeps):
+        ##Solve the Stokes equations to get starred value
+        xVelocityEq.cacheMatrix()
+        xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
+        xmat = xVelocityEq.matrix
+        ##update the ap coefficient from the matrix diagonal
+        ap[:] = xmat.takeDiagonal()
+        #
+        ##update the face velocities based on starred values with the Rhi-Chow correction
+        #cell pressure gradient
+        presgrad = pressure.grad
+        #face pressure gradient
+        facepresgrad = _FaceGradVariable(pressure)
+        #
+        velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
+        velocity[0, mesh.facesLeft.value] = U
+        velocity[0, mesh.facesRight.value] = U
+        ##solve the pressure correction equation
+        pressureCorrectionEq.cacheRHSvector()
+        pres = pressureCorrectionEq.sweep(var=pressureCorrection)
+        rhs = pressureCorrectionEq.RHSvector
+        ## update the pressure using the corrected value
+        pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
+        ## update the velocity using the corrected pressure
+        xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+        xVelocity[0]=U
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
-"""
-raw_input("pause")
+
+
+raw_inpu("pause")
