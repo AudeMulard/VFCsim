@@ -28,7 +28,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
+Mobility = 0.1 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon =1. #code starts going crazy below epsilon=0.1
 l = 1. #this is lambda from Hamouda's paper
 M = Mobility * epsilon**2 #M in Hamouda's paper
@@ -127,13 +127,10 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    res = eq.sweep(var=phi, dt = dt)
+    eq.solve(var=phi, dt = dt)
     if __name__ == '__main__':
         viewer.plot()
-#    print(res)
- 
 
-viewer.plot(filename="myImage")
 #Pressure and velocity
 #Velocity and pressure
 Q = 1. #rate of injection
@@ -145,7 +142,7 @@ pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
 pressureCorrection.constrain(0., mesh.facesRight)
-"""
+
 sweeps = 41
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred value
@@ -183,17 +180,3 @@ for sweep in range(sweeps):
         viewer2.plot()
 #        print 'sweep:',sweep,', x residual:',xres, ', p residual:',pres, ', continuity:',max(abs(rhs))
 
-displacement = 125.
-timeStep = 0.1* dx / U
-elapsed = 0.
-
-while elapsed < displacement/U:
-    phi.updateOld()
-    res = 1e+10
-    while res > 1e-10:
-        res = eq.sweep(var=phi, dt=timeStep)
-    elapsed +=timeStep
-    viewer.plot()
-    viewer2.plot()
-"""
-raw_input("pause")
