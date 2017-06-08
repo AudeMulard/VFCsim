@@ -168,7 +168,7 @@ for sweep in range(sweeps):
     if sweep%10 == 0:
         viewer2.plot()
 
-"""
+
 displacement = 150.
 timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
@@ -209,5 +209,5 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
-"""
+
 raw_input("pause")
