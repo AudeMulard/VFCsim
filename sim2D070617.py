@@ -112,6 +112,7 @@ phi.faceGrad.constrain([0], mesh.facesRight)
 #Viewer
 viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
 viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=0., datamax=1.)
+viewer3 = Viewer(vars = (pressure), datamin=0, datamax=20.)
 
 
 #-----------------------------------------------------------------------
@@ -138,6 +139,7 @@ while elapsed < duration:
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
+yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
 pressureCorrection.constrain(0., mesh.facesRight)
 
 sweeps = 41
@@ -172,8 +174,10 @@ for sweep in range(sweeps):
     if sweep%10 == 0:
         viewer2.plot()
 
+viewer3.plot(filename="pressureini .png")
+TSVViewer(vars=(pressure)).plot(filename="essaidonneini.tsv")
 
-displacement = 150.
+displacement = 50.
 timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
 
@@ -199,7 +203,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -213,5 +217,10 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
+    if elapsed%5==0:
+        viewer3.plot(filename="pressure%d .png" % elapsed)
+        TSVViewer(vars=(pressure)).plot(filename="essaidonne%d .tsv" % elapsed)
+
+TSVViewer(vars=(phi, xVelocity, yVelocity, pressure)).plot(filename="essaidonne.tsv")
 
 raw_input("pause")
