@@ -28,8 +28,8 @@ b = 1. #gap
 #Mesh
 dx = 0.25 #width of controle volume
 nx = 1000 #number of controle volume
-dy = 25.
-ny = 10
+dy = 0.25
+ny = 200
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -194,8 +194,8 @@ while elapsed < displacement/U:
         #
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
-        velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+#        velocity[0, mesh.facesLeft.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -205,7 +205,7 @@ while elapsed < displacement/U:
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
-        xVelocity[0]=U
+#        xVelocity[0]=U
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
