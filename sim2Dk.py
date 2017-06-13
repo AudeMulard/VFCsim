@@ -1,18 +1,21 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 12 10:55:13 2017
+Created on Tue Jun 13 15:21:51 2017
 
 @author: aude
 """
 
-from fipy import *
 
+
+from fipy import *
+import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon =0.6 #code starts going crazy below epsilon=0.1
-l = 1. #this is lambda from Hamouda's paper
+epsilon = 1. #code starts going crazy below epsilon=0.1
+l = 0.01 #this is lambda from Hamouda's paper
+alpha = 0.001
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -24,8 +27,10 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = 1000 #number of controle volume
-mesh = Grid1D(dx=dx, nx=nx)
+nx = 150 #number of controle volume
+dy = 1.
+ny = 60
+mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -33,7 +38,6 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-
 M = Mobility * epsilon**2 #M in Hamouda's paper
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
@@ -44,6 +48,7 @@ beta2 = viscosity2 / permeability2
 pressure = CellVariable(mesh=mesh, name='pressure')
 pressureCorrection = CellVariable(mesh=mesh)
 xVelocity = CellVariable(mesh=mesh, name='X Velocity')
+yVelocity = CellVariable(mesh=mesh, name='Y Velocity')
 velocity = FaceVariable(mesh=mesh, rank=1)
 
 #-----------------------------------------------------------------------
@@ -52,9 +57,6 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 
 #Order Parameter
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1.)
-
-#New values
-
 
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
@@ -65,29 +67,32 @@ eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) 
 
 
 
+
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
 #-----------------------------------------------------------------------
-
+phi.faceGrad.constrain([0], mesh.facesRight)
 #Phase
 x = mesh.cellCenters[0]
+y = mesh.cellCenters[1]
 def initialize(phi):
-	phi.setValue(0.)
-	phi.setValue(1., where=x > nx*dx/2)
+    phi.setValue(0.)
+    for i in range(30):
+        a = random.gauss(0.2, 0.01)
+        phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
+
 
 initialize(phi)
 
-phi.faceGrad.constrain([0], mesh.facesRight)
 
-
-beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1.-phi))
-
+beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta2 * phi + beta1 * (1.-phi))
 #-----------------------------------------------------------------------
 #-------------------------Velocity and pressure-------------------------
 #-----------------------------------------------------------------------
 
 
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0] - ImplicitSourceTerm(alpha/U))
+yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1] - ImplicitSourceTerm(alpha/U))
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
@@ -97,24 +102,29 @@ pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
 from fipy.variables.faceGradVariable import _FaceGradVariable
 volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
 contrvolume=volume.arithmeticFaceValue
+
+
 #-----------------------------------------------------------------------
 #-------------------------------Viewers---------------------------------
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi), datamin=-1., datamax=2.)
-viewer2 = Viewer(vars = (xVelocity), datamin=-1., datamax=3.)
-viewer3 = Viewer(vars=(pressure), datamin=0., datamax=250.)
+viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
+viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=0., datamax=1.)
+viewer3 = Viewer(vars = (pressure), datamin=0., datamax=250.)
+viewer4 = Viewer(vars = (beta), datamin=0., datamax=1.)
+
 
 
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
 
+#Phase
 
 dexp = 1.
 elapsed = 0.
-duration = 1500.
+duration = 3000.
 while elapsed < duration:
     phi.updateOld()
     dt = min(100, numerix.exp(dexp))
@@ -126,11 +136,11 @@ while elapsed < duration:
 
  
 
-
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
+yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
 pressureCorrection.constrain(0., mesh.facesRight)
 
 sweeps = 41
@@ -139,9 +149,9 @@ for sweep in range(sweeps):
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
+    yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
-    #
     ##update the face velocities based on starred values with the Rhi-Chow correction
     #cell pressure gradient
     presgrad = pressure.grad
@@ -149,6 +159,7 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
+    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
     velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
@@ -159,15 +170,15 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
+    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     if sweep%10 == 0:
         viewer2.plot()
-        viewer3.plot()
-#        print 'sweep:',sweep,', x residual:',xres, ', p residual:',pres, ', continuity:',max(abs(rhs))
 
+viewer3.plot(filename="pressureini .png")
+TSVViewer(vars=(pressure)).plot(filename="essaidonneini.tsv")
 
-
-displacement = 50.
+displacement = 100.
 timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
 
@@ -182,9 +193,9 @@ while elapsed < displacement/U:
         xVelocityEq.cacheMatrix()
         xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
         xmat = xVelocityEq.matrix
+        yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
         ##update the ap coefficient from the matrix diagonal
         ap[:] = xmat.takeDiagonal()
-        #
         ##update the face velocities based on starred values with the Rhi-Chow correction
         #cell pressure gradient
         presgrad = pressure.grad
@@ -192,8 +203,9 @@ while elapsed < displacement/U:
         facepresgrad = _FaceGradVariable(pressure)
         #
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-        velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+        velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
+#        velocity[0, mesh.facesLeft.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -202,11 +214,16 @@ while elapsed < displacement/U:
         pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-        xVelocity[0]=U
+        yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
+#        xVelocity[0]=U
     elapsed +=timeStep
-    viewer.plot()
+    viewer.plot(filename="phase%d .png" % elapsed)
     viewer2.plot()
     viewer3.plot()
+    viewer4.plot()
 
+
+viewer4.plot()
+TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 
 raw_input("pause")

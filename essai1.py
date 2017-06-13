@@ -12,7 +12,7 @@ from fipy import *
 import random
 
 U = 0.8
-Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
+Mobility = 2. #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
 #-----------------------------------------------------------------------
@@ -123,7 +123,7 @@ viewer4 = Viewer(vars = (beta), datamin=0., datamax=1.)
 
 dexp = 1.
 elapsed = 0.
-duration = 1500.
+duration = 50.
 while elapsed < duration:
     phi.updateOld()
     dt = min(100, numerix.exp(dexp))
@@ -142,7 +142,7 @@ xVelocity.constrain(U, mesh.facesLeft)
 yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
 pressureCorrection.constrain(0., mesh.facesRight)
 
-sweeps = 100
+sweeps = 41
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred value
     xVelocityEq.cacheMatrix()

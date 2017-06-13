@@ -11,8 +11,9 @@ from fipy import *
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon =0.6 #code starts going crazy below epsilon=0.1
-l = 1. #this is lambda from Hamouda's paper
+epsilon =1. #code starts going crazy below epsilon=0.1
+l = 0.01 #this is lambda from Hamouda's paper
+alpha=0.001
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -87,12 +88,12 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1.-ph
 #-----------------------------------------------------------------------
 
 
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0] - ImplicitSourceTerm(alpha/U))
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
+#pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence -0.0001
 pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
-
 #Remove oscillations
 from fipy.variables.faceGradVariable import _FaceGradVariable
 volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
