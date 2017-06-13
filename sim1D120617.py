@@ -1,19 +1,17 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun  5 10:47:17 2017
+Created on Mon Jun 12 10:55:13 2017
 
 @author: aude
-
-Sim1Davec updtae de la vitesse à chaque pas 
 """
 
 from fipy import *
 
 
 U = 0.8
-Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon =1. #code starts going crazy below epsilon=0.1
+Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon =0.6 #code starts going crazy below epsilon=0.1
 l = 1. #this is lambda from Hamouda's paper
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
@@ -56,7 +54,7 @@ velocity = FaceVariable(mesh=mesh, rank=1)
 phi = CellVariable(name=r'$\phi$', mesh=mesh, hasOld=1.)
 
 #New values
-beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1.-phi))
+
 
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
@@ -65,21 +63,7 @@ coeff1 = Mobility * l * (6.* PHI*(PHI-1.) + 1.)
 
 eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) - DiffusionTerm(coeff=(M, l)))
 
-#-----------------------------------------------------------------------
-#-------------------------Velocity and pressure-------------------------
-#-----------------------------------------------------------------------
 
-
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
-
-ap = CellVariable(mesh=mesh, value=1.)
-coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
-
-#Remove oscillations
-from fipy.variables.faceGradVariable import _FaceGradVariable
-volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
-contrvolume=volume.arithmeticFaceValue
 
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
@@ -96,14 +80,31 @@ initialize(phi)
 phi.faceGrad.constrain([0], mesh.facesRight)
 
 
+beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1.-phi))
 
+#-----------------------------------------------------------------------
+#-------------------------Velocity and pressure-------------------------
+#-----------------------------------------------------------------------
+
+
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
+
+ap = CellVariable(mesh=mesh, value=1.)
+coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
+pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
+
+#Remove oscillations
+from fipy.variables.faceGradVariable import _FaceGradVariable
+volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
+contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 #-------------------------------Viewers---------------------------------
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=-1., datamax=2.)
+viewer = Viewer(vars = (phi,beta), datamin=-1., datamax=2.)
 viewer2 = Viewer(vars = (xVelocity), datamin=-1., datamax=3.)
+viewer3 = Viewer(vars=(pressure), datamin=0., datamax=250.)
 
 
 #-----------------------------------------------------------------------
@@ -161,7 +162,10 @@ for sweep in range(sweeps):
     xVelocity[0]=U
     if sweep%10 == 0:
         viewer2.plot()
+        viewer3.plot()
 #        print 'sweep:',sweep,', x residual:',xres, ', p residual:',pres, ', continuity:',max(abs(rhs))
+
+
 
 displacement = 50.
 timeStep = 0.8 * dx / U #less than one space step per time step
@@ -172,6 +176,7 @@ while elapsed < displacement/U:
     res = 1e+10
     while res > 1e-6:
         res = eq.sweep(var=phi, dt=timeStep)
+    beta.setValue(beta2 * phi + beta1 * (1.-phi))
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred value
         xVelocityEq.cacheMatrix()
@@ -201,6 +206,7 @@ while elapsed < displacement/U:
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
+    viewer3.plot()
 
 
 raw_input("pause")
