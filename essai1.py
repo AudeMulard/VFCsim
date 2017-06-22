@@ -12,9 +12,12 @@ from fipy import *
 import random
 
 U = 0.8
-Mobility = 2. #ratio of the two viscosities; M_c in Hamouda's paper
+Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
+duration = 1500. #stabilisation phase
+sweeps = 41 #stabilisation vitesse
+
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
@@ -108,10 +111,10 @@ contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
-viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=0., datamax=1.)
-viewer3 = Viewer(vars = (pressure), datamin=0., datamax=250.)
-viewer4 = Viewer(vars = (beta), datamin=0., datamax=1.)
+viewer = Viewer(vars = (phi), datamin=0., datamax=1.)
+viewer2 = Viewer(vars = (xVelocity), datamin=0., datamax=1.)
+viewer3 = Viewer(vars = (yVelocity), datamin=0., datamax=1.)
+viewer4 = Viewer(vars = (pressure), datamin=0., datamax=250.)
 
 
 
@@ -123,7 +126,7 @@ viewer4 = Viewer(vars = (beta), datamin=0., datamax=1.)
 
 dexp = 1.
 elapsed = 0.
-duration = 50.
+
 while elapsed < duration:
     phi.updateOld()
     dt = min(100, numerix.exp(dexp))
@@ -136,13 +139,14 @@ while elapsed < duration:
  
 
 #Pressure and velocity
-pressureRelaxation = 0.8
-velocityRelaxation = 0.5
+
 xVelocity.constrain(U, mesh.facesLeft)
 yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
 pressureCorrection.constrain(0., mesh.facesRight)
 
-sweeps = 41
+pressureRelaxation = 0.8
+velocityRelaxation = 0.5
+
 for sweep in range(sweeps):
     ##Solve the Stokes equations to get starred value
     xVelocityEq.cacheMatrix()
@@ -174,8 +178,7 @@ for sweep in range(sweeps):
     if sweep%10 == 0:
         viewer2.plot()
 
-viewer3.plot(filename="pressureini .png")
-TSVViewer(vars=(pressure)).plot(filename="essaidonneini.tsv")
+
 
 displacement = 100.
 timeStep = 0.8 * dx / U #less than one space step per time step
@@ -217,12 +220,12 @@ while elapsed < displacement/U:
 #        xVelocity[0]=U
     elapsed +=timeStep
     viewer.plot(filename="phase%d .png" % elapsed)
-    viewer2.plot()
-    viewer3.plot()
-    viewer4.plot()
+    viewer2.plot(filename="Xvelocity%d .png" % elapsed)
+    viewer4.plot(filename="pressure%d .png" % elapsed)
+    viewer3.plot(filename="Yvelocity%d" % elapsed)
+    print(elapsed)
 
 
-viewer4.plot()
 TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 
 raw_input("pause")

@@ -92,8 +92,8 @@ xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0] - ImplicitSourc
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-#pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence -0.0001
-pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
+pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence -1+phi
+#pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
 #Remove oscillations
 from fipy.variables.faceGradVariable import _FaceGradVariable
 volume = CellVariable(mesh=mesh, value=mesh.cellVolumes, name='Volume')
