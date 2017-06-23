@@ -219,10 +219,12 @@ while elapsed < displacement/U:
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
 #        xVelocity[0]=U
     elapsed +=timeStep
-    viewer.plot(filename="phase%d .png" % elapsed)
-    viewer2.plot(filename="Xvelocity%d .png" % elapsed)
-    viewer4.plot(filename="pressure%d .png" % elapsed)
-    viewer3.plot(filename="Yvelocity%d" % elapsed)
+    viewer.plot()
+    viewer2.plot()
+    viewer4.plot()
+    viewer3.plot()
+    if elapsed%10==0:
+        TSVViewer(vars=(pressure)).plot(filename="pressure%d.tsv" % elapsed)
     print(elapsed)
 
 
