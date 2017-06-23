@@ -10,6 +10,7 @@ Created on Tue Jun 13 15:21:51 2017
 
 from fipy import *
 import random
+import math
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
@@ -128,8 +129,7 @@ while elapsed < duration:
     dexp += 0.01
     eq.solve(var=phi, dt = dt)
     viewer.plot(filename="phase%d .png" % elapsed)
-
-
-TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne150000.tsv")
+    if math.floor(elapsed)%10==0:
+        TSVViewer(vars=(phi)).plot(filename="essaidonne150000%d.tsv" % elapsed)
 
 raw_input("pause")
