@@ -18,7 +18,7 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.25 #width of controle volume
+dx = 0.1 #width of controle volume
 dy = 2.5
 nx = 1000
 ny = 100 #number of controle volume

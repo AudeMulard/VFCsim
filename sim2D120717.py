@@ -10,8 +10,8 @@ Created on Mon Jun 12 10:02:57 2017
 from fipy import *
 import random
 
-U = 0.8
-Mobility = 0.01 #ratio of the two viscosities; M_c in Hamouda's paper
+U = 3.
+Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon =1. #code starts going crazy below epsilon=0.1
 l = 1. #this is lambda from Hamouda's paper
 #-----------------------------------------------------------------------
@@ -24,10 +24,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.25 #width of controle volume
+dx = 0.1 #width of controle volume
 nx = 1000 #number of controle volume
-dy = 25
-ny = 10
+dy = 2.5
+ny = 15
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------

@@ -120,17 +120,16 @@ viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
 
 dexp = 1.
 elapsed = 0.
-duration = 1500.
+duration = 150000.
 while elapsed < duration:
     phi.updateOld()
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
     eq.solve(var=phi, dt = dt)
-    if elapsed%100==0:
-        viewer.plot(filename="phase%d .png" % elapsed)
+    viewer.plot(filename="phase%d .png" % elapsed)
 
 
-TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
+TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne150000.tsv")
 
 raw_input("pause")
