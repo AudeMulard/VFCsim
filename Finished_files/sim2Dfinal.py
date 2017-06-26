@@ -18,10 +18,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.1 #width of controle volume
-dy = 2.5
-nx = 1000
-ny = 100 #number of controle volume
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 1.
+ny = 60
 mesh = Grid2D(dx=dx, dy=dy, nx=nx, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -56,8 +56,8 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta1 * phi + beta2 * (1-phi
 #Cahn_number = 0.001
 epsilon = 1.
 M = Mobility * epsilon**2
-l = 1.
-fluxRight=1.
+l = 0.01
+
 phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation
 PHI = phi.arithmeticFaceValue #result more accurate by non-linear interpolation
@@ -110,7 +110,7 @@ X = mesh.faceCenters
 
 #Viewer
 viewer = Viewer(vars = (phi,), datamin=0., datamax=1.)
-#viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
+viewer2 = Viewer(vars = (xVelocity, yVelocity), datamin=-1., datamax=3.)
 
 
 #-----------------------------------------------------------------------
@@ -123,7 +123,7 @@ for i in range(20):
     phi.updateOld()
     res = 1e+10
     while res > 1e-7:
-        res = eq.sweep(var=phi, dt=timeStep, solver=GeneralSolver(iterations=2000, tolerance=1e-15))
+        res = eq.sweep(var=phi, dt=timeStep)
     if __name__ == '__main__':
         viewer.plot()
 
@@ -181,7 +181,7 @@ x = mesh.cellCenters[0]
 
 displacement = 125.
 #velocity1 = 1.
-timeStep = .1 * dx / U
+timeStep = 0.7 * dx / U
 elapsed = 0.
 while elapsed < displacement/U:
     phi.updateOld()
