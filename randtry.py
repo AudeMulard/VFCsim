@@ -1,9 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+
 """
 Created on Tue Jun 13 15:21:51 2017
 
 @author: aude
+
+cond initiales fixes afin de svaoir si lié aux conditions initiales ou pas
 """
 
 
@@ -15,8 +18,8 @@ U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
-sweeps = 100 #stabilisation vitesse
+duration = 50. #stabilisation phase
+sweeps = 41 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
@@ -80,8 +83,10 @@ y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
     for i in range(30):
-        a = random.gauss(0.2, 0.01)
-        phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
+        if i%2==0:
+            phi.setValue(1., where=(x > nx*dx *0.21 ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
+        else:
+            phi.setValue(1., where=(x > nx*dx *0.19 ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 
 initialize(phi)
@@ -219,19 +224,12 @@ while elapsed < displacement/U:
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
 #        xVelocity[0]=U
     elapsed +=timeStep
-    viewer.plot()
+    viewer.plot(filename="phi%d.png" % elapsed)
     viewer2.plot()
     viewer4.plot()
     viewer3.plot()
-    if elapsed%10==0:
-        TSVViewer(vars=(pressure)).plot(filename="pressure%d.tsv" % elapsed)
     print(elapsed)
 
-
-viewer.plot(filename="phi%d.png" % elapsed)
-viewer2.plot(filename="XVelocity%d.png" % elapsed)
-viewer4.plot(filename="YVelocity%d.png" % elapsed)
-viewer3.plot(filename="pressure%d.png" % elapsed)
 
 TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 
