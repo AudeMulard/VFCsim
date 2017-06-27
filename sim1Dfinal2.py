@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 23 16:56:58 2017
+Created on Tue Jun 27 10:23:39 2017
 
 @author: aude
 """
@@ -116,14 +116,17 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 #-----------------------------------------------------------------------
 
 #Phase
-timeStep = 10.
-for i in range(50):
+dexp = 1.
+elapsed = 0.
+duration=10000.
+while elapsed < duration:
     phi.updateOld()
-    res = 1e+10
-    while res > 1e-10:
-        res = eq.sweep(var=phi, dt=timeStep)
+    dt = min(100, numerix.exp(dexp))
+    elapsed += dt
+    dexp += 0.01
+    eq.solve(var=phi, dt = dt)
     if __name__ == '__main__':
-        viewer.plot()       
+        viewer.plot()
 
 #TSVViewer(vars=(phi, xVelocity)).plot(filename="essaidonne.tsv")
 
@@ -133,7 +136,7 @@ for i in range(50):
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 xVelocity.constrain(U, mesh.facesLeft)
-xVelocity.constrain(U, mesh.facesRight)
+#xVelocity.constrain(U, mesh.facesRight)
 pressureCorrection.constrain(0., mesh.facesLeft)
 sweeps = 50
 for sweep in range(sweeps):

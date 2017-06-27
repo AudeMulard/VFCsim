@@ -1,21 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 13 15:21:51 2017
+Created on Tue Jun 27 09:35:57 2017
 
 @author: aude
 """
-
-
 
 from fipy import *
 import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
+duration = 10000. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -28,11 +26,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.1 #width of controle volume
-nx = 300 #number of controle volume
-dy = 1.
-ny = 60
-mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
+dx = 0.25 #width of controle volume
+nx = 100 #number of controle volume
+
+mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
@@ -76,12 +73,12 @@ eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) 
 phi.faceGrad.constrain([0], mesh.facesRight)
 #Phase
 x = mesh.cellCenters[0]
-y = mesh.cellCenters[1]
+#y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
     for i in range(30):
-        a = random.gauss(0.2, 0.005)
-        phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
+        a = random.gauss(0.2, 0.01)
+        phi.setValue(1., where=(x > nx*dx * a ))
 
 
 initialize(phi)
@@ -94,7 +91,7 @@ beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta2 * phi + beta1 * (1
 
 
 xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
-yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1])
+#yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1])
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
@@ -111,7 +108,7 @@ contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi), datamin=0., datamax=1.)
+viewer = Viewer(vars = (phi), datamin=0., datamax=2.)
 viewer2 = Viewer(vars = (xVelocity), datamin=0., datamax=1.)
 viewer3 = Viewer(vars = (yVelocity), datamin=0., datamax=1.)
 viewer4 = Viewer(vars = (pressure), datamin=0., datamax=250.)
@@ -141,7 +138,7 @@ while elapsed < duration:
 #Pressure and velocity
 
 xVelocity.constrain(U, mesh.facesLeft)
-yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
+#yVelocity.constrain(0, mesh.facesTop | mesh.facesBottom)
 pressureCorrection.constrain(0., mesh.facesRight)
 
 pressureRelaxation = 0.8
@@ -152,7 +149,7 @@ for sweep in range(sweeps):
     xVelocityEq.cacheMatrix()
     xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
     xmat = xVelocityEq.matrix
-    yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
+#    yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
     ##update the ap coefficient from the matrix diagonal
     ap[:] = xmat.takeDiagonal()
     ##update the face velocities based on starred values with the Rhi-Chow correction
@@ -162,7 +159,7 @@ for sweep in range(sweeps):
     facepresgrad = _FaceGradVariable(pressure)
     #
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
+#    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
     velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
@@ -173,7 +170,7 @@ for sweep in range(sweeps):
     pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
     ## update the velocity using the corrected pressure
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
+#    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     xVelocity[nx-1]=U
     if sweep%10 == 0:
@@ -196,7 +193,7 @@ while elapsed < displacement/U:
         xVelocityEq.cacheMatrix()
         xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
         xmat = xVelocityEq.matrix
-        yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
+#        yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
         ##update the ap coefficient from the matrix diagonal
         ap[:] = xmat.takeDiagonal()
         ##update the face velocities based on starred values with the Rhi-Chow correction
@@ -206,7 +203,7 @@ while elapsed < displacement/U:
         facepresgrad = _FaceGradVariable(pressure)
         #
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
-        velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
+#        velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
         velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
@@ -217,7 +214,7 @@ while elapsed < displacement/U:
         pressure.setValue(pressure + pressureRelaxation * pressureCorrection)
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
-        yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
+#        yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
         xVelocity[0]=U
         xVelocity[nx-1]=U
     elapsed +=timeStep

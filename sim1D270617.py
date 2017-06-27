@@ -19,7 +19,7 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = 100 #number of controle volume
+nx = 150 #number of controle volume
 mesh = Grid1D(dx=dx, nx=nx)
 
 #-----------------------------------------------------------------------
@@ -28,7 +28,7 @@ mesh = Grid1D(dx=dx, nx=nx)
 
 #Parameters of the fluids
 viscosity2 = 1.
-Mobility = 0.1 #ratio of the two viscosities
+Mobility = 0.2 #ratio of the two viscosities
 viscosity1 = viscosity2 * Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
@@ -54,7 +54,7 @@ beta = CellVariable(mesh=mesh, name='beta', value = beta2 * phi + beta1 * (1-phi
 #Cahn_number = 0.001
 epsilon = 1.
 M = Mobility * epsilon**2
-l = 0.01
+l = 1.
 fluxRight=1.
 #phi.constrain(1., mesh.facesRight)
 #Cahn-Hilliard equation

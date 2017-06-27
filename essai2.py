@@ -1,19 +1,17 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 13 15:21:51 2017
+Created on Tue Jun 27 09:40:46 2017
 
 @author: aude
 """
-
-
 
 from fipy import *
 import random
 
 U = 0.8
-Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+Mobility = 0.1 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
 duration = 1500. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
@@ -28,10 +26,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.1 #width of controle volume
-nx = 300 #number of controle volume
+dx = 0.25 #width of controle volume
+nx = 10 #number of controle volume
 dy = 1.
-ny = 60
+ny = 10
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -80,7 +78,7 @@ y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
     for i in range(30):
-        a = random.gauss(0.2, 0.005)
+        a = random.gauss(0.2, 0.01)
         phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 
@@ -175,7 +173,6 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
@@ -207,8 +204,8 @@ while elapsed < displacement/U:
         #
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
-        velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+#        velocity[0, mesh.facesLeft.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -218,8 +215,7 @@ while elapsed < displacement/U:
         ## update the velocity using the corrected pressure
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
-        xVelocity[0]=U
-        xVelocity[nx-1]=U
+#        xVelocity[0]=U
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
