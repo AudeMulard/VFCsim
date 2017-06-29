@@ -13,9 +13,9 @@ import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.6 #code starts going crazy below epsilon=0.1
-l = 0.01 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
+epsilon = 1. #code starts going crazy below epsilon=0.1
+l = 0.1 #this is lambda from Hamouda's paper
+duration = 50. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -28,10 +28,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.25 #width of controle volume
-nx = 1000 #number of controle volume
-dy = 0.25
-ny = 600
+dx = 0.15 #width of controle volume
+nx = 300 #number of controle volume
+dy = 0.5
+ny = 100
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -79,8 +79,8 @@ x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
-    for i in range(300):
-        a = random.gauss(0.2, 0.005)
+    for i in range(50):
+        a = random.gauss(0.1, 0.005)
         phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 
@@ -164,7 +164,7 @@ for sweep in range(sweeps):
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
     velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
-    velocity[0, mesh.facesRight.value] = U
+#    velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
     pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -175,7 +175,7 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
+#    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
@@ -208,7 +208,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -219,22 +219,13 @@ while elapsed < displacement/U:
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
         xVelocity[0]=U
-        xVelocity[nx-1]=U
+#        xVelocity[nx-1]=U
     elapsed +=timeStep
-    viewer.plot()
-    viewer2.plot()
-    viewer4.plot()
-    viewer3.plot()
-    if elapsed%10==0:
-        TSVViewer(vars=(pressure)).plot(filename="pressure%d.tsv" % elapsed)
+    viewer.plot(filename="phi47_%d.png" % elapsed)
+    viewer2.plot(filename="XVelocity47_%d.png" % elapsed)
+    viewer4.plot(filename="YVelocity47_%d.png" % elapsed)
+    viewer3.plot(filename="pressure47_%d.png" % elapsed)
+    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne47_%d.tsv" % elapsed)
     print(elapsed)
-
-
-viewer.plot(filename="phi%d.png" % elapsed)
-viewer2.plot(filename="XVelocity%d.png" % elapsed)
-viewer4.plot(filename="YVelocity%d.png" % elapsed)
-viewer3.plot(filename="pressure%d.png" % elapsed)
-
-TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 
 raw_input("pause")

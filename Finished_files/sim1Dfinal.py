@@ -117,7 +117,7 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 
 #Phase
 timeStep = 10.
-for i in range(50):
+for i in range(300):
     phi.updateOld()
     res = 1e+10
     while res > 1e-10:
@@ -176,7 +176,7 @@ viewer.plot()
 
 x = mesh.cellCenters[0]    
 
-displacement = 125.
+displacement = 10.
 #velocity1 = 1.
 timeStep = .1 * dx / U
 elapsed = 0.
@@ -190,5 +190,3 @@ while elapsed < displacement/U:
     viewer.plot()
     viewer2.plot()
 
-
-raw_input("pause")
