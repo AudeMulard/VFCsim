@@ -13,7 +13,7 @@ import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 0.6 #code starts going crazy below epsilon=0.1
 l = 0.01 #this is lambda from Hamouda's paper
 duration = 1500. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
@@ -28,10 +28,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.1 #width of controle volume
-nx = 300 #number of controle volume
-dy = 1.
-ny = 60
+dx = 0.25 #width of controle volume
+nx = 1000 #number of controle volume
+dy = 0.25
+ny = 600
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -79,7 +79,7 @@ x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
-    for i in range(30):
+    for i in range(300):
         a = random.gauss(0.2, 0.005)
         phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
 
