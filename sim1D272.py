@@ -70,21 +70,21 @@ eq = (TransientTerm() + ConvectionTerm(velocity) == DiffusionTerm(coeff=coeff1) 
 #-----------------------------------------------------------------------
 #-------------------------Boundary Conditions---------------------------
 #-----------------------------------------------------------------------
-phi.faceGrad.constrain([0], mesh.facesRight)
+phi.faceGrad.constrain([0], mesh.facesRight | mesh.facesLeft)
 #Phase
 x = mesh.cellCenters[0]
 #y = mesh.cellCenters[1]
 def initialize(phi):
-    phi.setValue(0.)
+    phi.setValue(1.)
     for i in range(30):
         a = random.gauss(0.2, 0.01)
-        phi.setValue(1., where=(x > nx*dx * a ))
+        phi.setValue(0., where=(x > nx*dx * a ))
 
 
 initialize(phi)
 
 
-beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta2 * phi + beta1 * (1.-phi))
+beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta1 * phi + beta2 * (1.-phi))
 #-----------------------------------------------------------------------
 #-------------------------Velocity and pressure-------------------------
 #-----------------------------------------------------------------------
@@ -161,7 +161,7 @@ for sweep in range(sweeps):
     velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
 #    velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
-    velocity[0, mesh.facesRight.value] = U
+#    velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
     pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -172,13 +172,13 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
 #    yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
-    xVelocity[nx-1]=U
+#    xVelocity[nx-1]=U
     if sweep%10 == 0:
         viewer2.plot()
 
 
 
-displacement = 100.
+displacement = 15.
 timeStep = 0.6 * dx / U #less than one space step per time step
 elapsed = 0.
 
@@ -205,7 +205,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
 #        velocity[1] = yVelocity.arithmeticFaceValue + contrvolume / ap.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-        velocity[0, mesh.facesRight.value] = U
+#        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -216,7 +216,7 @@ while elapsed < displacement/U:
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / ap * mesh.cellVolumes)
 #        yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
         xVelocity[0]=U
-        xVelocity[nx-1]=U
+#        xVelocity[nx-1]=U
     elapsed +=timeStep
     viewer.plot()
     viewer2.plot()
@@ -224,7 +224,6 @@ while elapsed < displacement/U:
     viewer3.plot()
     if elapsed%10==0:
         TSVViewer(vars=(pressure)).plot(filename="pressure%d.tsv" % elapsed)
-    print(elapsed)
 
 
 viewer.plot(filename="phi%d.png" % elapsed)
@@ -234,4 +233,4 @@ viewer3.plot(filename="pressure%d.png" % elapsed)
 
 TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 
-raw_input("pause")
+raw_input(pause)
