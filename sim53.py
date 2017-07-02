@@ -4,21 +4,22 @@
 Created on Tue Jun 13 15:21:51 2017
 
 @author: aude
-
-Correction du code avec le bon coefficient a
 """
 
 
 
 from fipy import *
 import random
+from math import sqrt
+
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 1. #code starts going crazy below epsilon=0.1
-l = 0.1 #this is lambda from Hamouda's paper
-duration = 50. #stabilisation phase
+epsilon = 0.5 #code starts going crazy below epsilon=0.1
+l = 0.3 #this is lambda from Hamouda's paper
+duration = 1500. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
+alpha=0.1
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
@@ -30,10 +31,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.25 #width of controle volume
-nx = 150 #number of controle volume
-dy = 1.
-ny = 60
+dx = 0.15 #width of controle volume
+nx = 300 #number of controle volume
+dy = 0.5
+ny = 100
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -51,7 +52,7 @@ beta2 = viscosity2 / permeability2
 #Variable of the fluids
 pressure = CellVariable(mesh=mesh, name='pressure')
 pressureCorrection = CellVariable(mesh=mesh)
-xVelocity = CellVariable(mesh=mesh, name='X Velocity')
+xVelocity = CellVariable(mesh=mesh, name='X Velocity', value=U)
 yVelocity = CellVariable(mesh=mesh, name='Y Velocity')
 velocity = FaceVariable(mesh=mesh, rank=1)
 
@@ -81,8 +82,8 @@ x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
-    for i in range(30):
-        a = random.gauss(0.2, 0.005)
+    for i in range(50):
+        a = random.gauss(0.2, 0.01)
         phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 
@@ -95,8 +96,9 @@ beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta2 * phi + beta1 * (1
 #-----------------------------------------------------------------------
 
 
-xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0])
-yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1])
+xVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[0] - ImplicitSourceTerm(alpha/(numerix.sqrt(xVelocity*xVelocity+yVelocity*yVelocity))))
+yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1] - ImplicitSourceTerm(alpha/(numerix.sqrt(xVelocity*xVelocity+yVelocity*yVelocity))))
+
 
 coeff = 1./ beta.arithmeticFaceValue
 pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
@@ -226,4 +228,4 @@ while elapsed < displacement/U:
     TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne%d.tsv" % elapsed)
     print(elapsed)
 
-raw_input("pause")
+
