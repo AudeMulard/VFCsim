@@ -16,8 +16,8 @@ import random
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 0.5 #code starts going crazy below epsilon=0.1
-l = 0.03 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
+l = 0.1 #this is lambda from Hamouda's paper
+duration = 50. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -179,7 +179,7 @@ for sweep in range(sweeps):
 
 
 
-displacement = 100.
+displacement = 60.
 timeStep = 0.6 * dx / U #less than one space step per time step
 elapsed = 0.
 
