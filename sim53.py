@@ -15,7 +15,7 @@ from math import sqrt
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 0.6 #code starts going crazy below epsilon=0.1
 l = 0.3 #this is lambda from Hamouda's paper
 duration = 1500. #stabilisation phase
 sweeps = 100 #stabilisation vitesse

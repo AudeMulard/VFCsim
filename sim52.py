@@ -15,9 +15,9 @@ import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 0.6 #code starts going crazy below epsilon=0.1
 l = 0.03 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
+duration = 50. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -30,10 +30,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.15 #width of controle volume
-nx = 300 #number of controle volume
-dy = 0.5
-ny = 100
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 1.
+ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
