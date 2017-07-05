@@ -133,7 +133,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(var=phi, dt = dt)
+    eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
     if __name__ == '__main__':
         viewer.plot()
 
@@ -165,7 +165,7 @@ for sweep in range(sweeps):
     velocity[0] = xVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
     velocity[1] = yVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
-#    velocity[0, mesh.facesRight.value] = U
+    velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
     pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -176,12 +176,12 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
     xVelocity[0]=U
-#    xVelocity[nx-1]=U
+    xVelocity[nx-1]=U
 
 
 
 
-displacement = 100.
+displacement = 50.
 timeStep = 0.6 * dx / U #less than one space step per time step
 elapsed = 0.
 
@@ -189,7 +189,7 @@ while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-6:
-        res = eq.sweep(var=phi, dt=timeStep)
+        res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred value
@@ -208,7 +208,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-#        velocity[0, mesh.facesRight.value] = U
+        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -219,7 +219,7 @@ while elapsed < displacement/U:
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
         xVelocity[0]=U
-#        xVelocity[nx-1]=U
+        xVelocity[nx-1]=U
     elapsed +=timeStep
     viewer.plot(filename="phi%d.png" % elapsed)
     viewer2.plot(filename="XVelocity%d.png" % elapsed)
