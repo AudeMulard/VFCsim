@@ -15,7 +15,7 @@ U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 0.5 #code starts going crazy below epsilon=0.1
 l = 0.3 #this is lambda from Hamouda's paper
-duration = 1500. #stabilisation phase
+duration = 50. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -28,10 +28,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.15 #width of controle volume
-nx = 300 #number of controle volume
-dy = 0.5
-ny = 100
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 1.
+ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #-----------------------------------------------------------------------
@@ -111,10 +111,7 @@ contrvolume=volume.arithmeticFaceValue
 #-----------------------------------------------------------------------
 
 #Viewer
-viewer = Viewer(vars = (phi), datamin=0., datamax=1.)
-viewer2 = Viewer(vars = (xVelocity), datamin=0., datamax=1.)
-viewer3 = Viewer(vars = (yVelocity), datamin=0., datamax=1.)
-viewer4 = Viewer(vars = (pressure), datamin=0., datamax=250.)
+viewer = Viewer(vars=(pressure, xVelocity, yVelocity, velocity),xmin=0., xmax=nx*dx, ymin=0., ymax=ny*dy, colorbar=True)
 
 
 
@@ -176,8 +173,7 @@ for sweep in range(sweeps):
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / ap * mesh.cellVolumes)
     xVelocity[0]=U
     xVelocity[nx-1]=U
-    if sweep%10 == 0:
-        viewer2.plot()
+
 
 
 
@@ -222,18 +218,13 @@ while elapsed < displacement/U:
         xVelocity[nx-1]=U
     elapsed +=timeStep
     viewer.plot()
-    viewer2.plot()
-    viewer4.plot()
-    viewer3.plot()
     if elapsed%10==0:
         TSVViewer(vars=(pressure)).plot(filename="pressure%d.tsv" % elapsed)
     print(elapsed)
 
 
 viewer.plot(filename="phi%d.png" % elapsed)
-viewer2.plot(filename="XVelocity%d.png" % elapsed)
-viewer4.plot(filename="YVelocity%d.png" % elapsed)
-viewer3.plot(filename="pressure%d.png" % elapsed)
+
 
 TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne.tsv")
 

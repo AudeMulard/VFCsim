@@ -43,7 +43,7 @@ yVelocity.constrain(0., mesh.exteriorFaces)
 X, Y = mesh.faceCenters
 pressureCorrection.constrain(0., mesh.facesLeft & (Y < dL))
 
-viewer = Viewer(vars=(pressure, xVelocity, yVelocity), xmin=0., xmax=1., ymin=0., ymax=1., colorbar=True)
+viewer = Viewer(vars=(pressure, xVelocity, yVelocity, velocity), xmin=0., xmax=1., ymin=0., ymax=1., colorbar=True)
 
 for sweep in range(sweeps):
     xVelocityEq.cacheMatrix()
