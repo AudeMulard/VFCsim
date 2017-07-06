@@ -174,7 +174,7 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
     xVelocity[0]=U
-#    xVelocity[nx-1]=U
+    xVelocity[nx-1]=U
 
 
 
@@ -206,7 +206,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-#        velocity[0, mesh.facesRight.value] = U
+        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -217,7 +217,7 @@ while elapsed < displacement/U:
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
         xVelocity[0]=U
-#        xVelocity[nx-1]=U
+        xVelocity[nx-1]=U
     elapsed +=timeStep
     viewer.plot(filename="phi%d.png" % elapsed)
     viewer2.plot(filename="XVelocity%d.png" % elapsed)

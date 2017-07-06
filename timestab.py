@@ -10,6 +10,8 @@ Created on Tue Jun 13 15:21:51 2017
 
 from fipy import *
 import random
+from numba import jit
+
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
@@ -124,14 +126,19 @@ viewer4 = Viewer(vars = (pressure), datamin=0., datamax=250.)
 dexp = 1.
 elapsed = 0.
 
-while elapsed < duration:
+
+@jit
+def updatephi(phi, elapsed, dexp):
     phi.updateOld()
+    eq.solve(var=phi, dt = dt, solver= LinearPCGSolver())
+    if __name__ == '__main__':
+        viewer.plot()
+
+while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(var=phi, dt = dt, solver= LinearLUSolver())
-    if __name__ == '__main__':
-        viewer.plot()
+    updatephi(phi, elapsed, dexp)
 
 
 

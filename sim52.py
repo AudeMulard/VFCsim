@@ -21,8 +21,12 @@ l = 0.03 #this is lambda from Hamouda's paper
 =======
 epsilon = 0.5 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
+<<<<<<< HEAD
 >>>>>>> 1c70572192b5e91e0eabab71ab956f5a2dc693e3
 duration = 50. #stabilisation phase
+=======
+duration = 100. #stabilisation phase
+>>>>>>> 7e1679385c262fff1308de482692de7a9a7097dd
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
@@ -86,9 +90,11 @@ x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
     phi.setValue(0.)
-    for i in range(50):
-        a = random.gauss(0.2, 0.005)
-        phi.setValue(1., where=(x > nx*dx * a ) & (y<2*(i+1)*dy) & (y>2*(i*dy)))
+    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(12*y)))
+#    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
+#    for i in range(100):
+#        a = random.gauss(0.2, 0.05)
+#        phi.setValue(1., where=(x > nx*dx * a ) & (y<(i+1)*dy) & (y>(i*dy)))
 
 
 initialize(phi)
@@ -136,7 +142,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(var=phi, dt = dt)
+    eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
     if __name__ == '__main__':
         viewer.plot()
 
@@ -192,7 +198,7 @@ while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-6:
-        res = eq.sweep(var=phi, dt=timeStep)
+        res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred value

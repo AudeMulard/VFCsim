@@ -119,13 +119,17 @@ viewer2 = Viewer(vars = (xVelocity,), datamin=-1., datamax=3.)
 dexp = 1.
 elapsed = 0.
 duration=100.
-while elapsed < duration:
+
+
+def updatephi(phi, elapsed, dexp):
     phi.updateOld()
-    dt = min(100, numerix.exp(dexp))
-    elapsed += dt
-    dexp += 0.01
-    eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
+    eq.solve(var=phi, dt = dt, solver= LinearPCGSolver())
     if __name__ == '__main__':
         viewer.plot()
 
+while elapsed < duration:
+    dt = min(100, numerix.exp(dexp))
+    updatephi(phi, elapsed, dexp)
+    dexp += 0.01    
+    elapsed += dt
 
