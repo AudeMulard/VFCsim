@@ -80,13 +80,12 @@ phi.faceGrad.constrain([0], mesh.facesRight)
 x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
-    phi.setValue(0.)
-    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(12*y)))
-#    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
-#    for i in range(100):
-#        a = random.gauss(0.2, 0.05)
+#    phi.setValue(0.)
+#    phi.setValue(1., where=(x > 0.2*nx*dx +0.3*numerix.sin(12*y)))  
+    for i in range(100):
+        a = random.gauss(0.2, 0.005)
 #        phi.setValue(1., where=(x > nx*dx * a ) & (y<(i+1)*dy) & (y>(i*dy)))
-
+        phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
 
 initialize(phi)
 
@@ -133,7 +132,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
+    eq.solve(var=phi, dt = dt, solver=LinearPCGSolver())
     if __name__ == '__main__':
         viewer.plot()
 
@@ -165,7 +164,7 @@ for sweep in range(sweeps):
     velocity[0] = xVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
     velocity[1] = yVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
     velocity[0, mesh.facesLeft.value] = U
-#    velocity[0, mesh.facesRight.value] = U
+    velocity[0, mesh.facesRight.value] = U
     ##solve the pressure correction equation
     pressureCorrectionEq.cacheRHSvector()
     pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -176,7 +175,7 @@ for sweep in range(sweeps):
     xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
     yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
     xVelocity[0]=U
-#    xVelocity[nx-1]=U
+    xVelocity[nx-1]=U
 
 
 
@@ -189,7 +188,7 @@ while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-6:
-        res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
+        res = eq.sweep(var=phi, dt=timeStep, solver=LinearPCGSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     for sweep in range(sweeps):
         ##Solve the Stokes equations to get starred value
@@ -208,7 +207,7 @@ while elapsed < displacement/U:
         velocity[0] = xVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[0].arithmeticFaceValue-facepresgrad[0])
         velocity[1] = yVelocity.arithmeticFaceValue + 1. / beta.arithmeticFaceValue * (presgrad[1].arithmeticFaceValue-facepresgrad[1])
         velocity[0, mesh.facesLeft.value] = U
-#        velocity[0, mesh.facesRight.value] = U
+        velocity[0, mesh.facesRight.value] = U
         ##solve the pressure correction equation
         pressureCorrectionEq.cacheRHSvector()
         pres = pressureCorrectionEq.sweep(var=pressureCorrection)
@@ -219,13 +218,13 @@ while elapsed < displacement/U:
         xVelocity.setValue(xVelocity - pressureCorrection.grad[0] / beta)
         yVelocity.setValue(yVelocity - pressureCorrection.grad[1] / beta)
         xVelocity[0]=U
-#        xVelocity[nx-1]=U
+        xVelocity[nx-1]=U
     elapsed +=timeStep
     viewer.plot(filename="phi%d.png" % elapsed)
     viewer2.plot(filename="XVelocity%d.png" % elapsed)
     viewer4.plot(filename="pressure%d.png" % elapsed)
     viewer3.plot(filename="YVelocity%d.png" % elapsed)
     TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne%d.tsv" % elapsed)
-    print(elapsed)
+
 
 
