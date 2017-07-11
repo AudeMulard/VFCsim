@@ -15,18 +15,9 @@ import random
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-<<<<<<< HEAD
-epsilon = 0.6 #code starts going crazy below epsilon=0.1
-l = 0.03 #this is lambda from Hamouda's paper
-=======
 epsilon = 0.5 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
-<<<<<<< HEAD
->>>>>>> 1c70572192b5e91e0eabab71ab956f5a2dc693e3
-duration = 50. #stabilisation phase
-=======
 duration = 100. #stabilisation phase
->>>>>>> 7e1679385c262fff1308de482692de7a9a7097dd
 sweeps = 100 #stabilisation vitesse
 
 #-----------------------------------------------------------------------
