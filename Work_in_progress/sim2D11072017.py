@@ -5,18 +5,15 @@ Created on Tue Jun 13 15:21:51 2017
 
 @author: aude
 """
-
-
-
 from fipy import *
 import random
 from math import sqrt
 
 
 U = 0.8
-Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.2 #code starts going crazy below epsilon=0.1
-l = 0.01 #this is lambda from Hamouda's paper
+Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 0.5 #code starts going crazy below epsilon=0.1
+l = 0.1 #this is lambda from Hamouda's paper
 duration = 100. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 alpha1=0.1
@@ -27,9 +24,9 @@ alpha1=0.1
 
 #Mesh
 dx = 0.15 #width of controle volume
-nx = 300 #number of controle volume
-dy = 0.5
-ny = 100
+nx = 600 #number of controle volume
+dy = 0.2
+ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #Space
@@ -81,13 +78,16 @@ phi.faceGrad.constrain([0], mesh.facesRight | mesh.facesLeft)
 #Phase
 x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
+
 def initialize(phi):
-    for i in range(100):
-        a = random.gauss(0.2, 0.005)
-        phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
+#    phi.setValue(0.)
+#    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(12*y)))
+#    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
+    for i in range(30):
+        a = random.gauss(0.1, 0.005)
+        phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 initialize(phi)
-
 
 beta = CellVariable(mesh=mesh, name=r'$\beta$', value = beta2 * phi + beta1 * (1.-phi))
 alpha = CellVariable(mesh=mesh, name=r'$\alpha$', value = alpha1*(1.-phi))
@@ -133,7 +133,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    eq.solve(var=phi, dt = dt, solver=LinearPCGSolver())
+    eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
     if __name__ == '__main__':
         viewer.plot()
 
@@ -189,7 +189,7 @@ while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-6:
-        res = eq.sweep(var=phi, dt=timeStep)
+        res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     alpha.setValue(alpha1*(1.-phi))
     for sweep in range(sweeps):
