@@ -12,6 +12,9 @@ mv XVelocity*.png VFCsim/Results_simulations/sim_"${2}"/xVelocity
 mv YVelocity*.png VFCsim/Results_simulations/sim_"${2}"/yVelocity
 mv essaidonne*.tsv VFCsim/Results_simulations/sim_"${2}"/data
 for i in {1..9} 
+do mv VFCsim/Results_simulations/sim_"${2}"/phi/phi"${i}".png VFCsim/Results_simulations/sim_"${2}"/phi/phi00"${i}".png
+done
+for i in {10..99} 
 do mv VFCsim/Results_simulations/sim_"${2}"/phi/phi"${i}".png VFCsim/Results_simulations/sim_"${2}"/phi/phi0"${i}".png
 done
 mencoder mf:// -mf w=800:h=600:fps=04:type=png -ovc lavc -oac copy -o sim_"${2}".avi

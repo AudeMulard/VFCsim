@@ -79,13 +79,14 @@ phi.faceGrad.constrain([0], mesh.facesRight)
 #Phase
 x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
+
 def initialize(phi):
-#    phi.setValue(0.)
-#    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(12*y)))
+    phi.setValue(0.)
+    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
-    for i in range(30):
-        a = random.gauss(0.1, 0.005)
-        phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<2*(i+1)*dy) & (y>2*(i*dy)))
+#    for i in range(30):
+#        a = random.gauss(0.1, 0.005)
+#        phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<2*(i+1)*dy) & (y>2*(i*dy)))
 
 
 initialize(phi)
