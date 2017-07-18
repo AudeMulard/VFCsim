@@ -5,12 +5,13 @@ mkdir -p Results_simulations/sim_"${2}"
 cd Results_simulations/sim_"${2}"
 mkdir -p phi pressure xVelocity yVelocity data
 cd
-python VFCsim/Work_in_progress/"${1}".py --inline
+python VFCsim/Work_in_progress/"${1}".py "${2}" --inline
 mv phi*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/phi
 mv pressure*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/pressure
 mv XVelocity*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/xVelocity
 mv YVelocity*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/yVelocity
 mv essaidonne*_"${2}".tsv VFCsim/Results_simulations/sim_"${2}"/data
+mv parameters_"${2}".csv VFCsim/Results_simulations/sim_"${2}"/data
 for i in {1..9} 
 do mv VFCsim/Results_simulations/sim_"${2}"/phi/phi"${i}"_"${2}".png VFCsim/Results_simulations/sim_"${2}"/phi/phi00"${i}"_"${2}".png
 done
