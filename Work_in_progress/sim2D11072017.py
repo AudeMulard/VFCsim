@@ -12,7 +12,7 @@ from math import sqrt
 
 U = 0.8
 Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 0.35 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
 duration = 100. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
@@ -24,9 +24,9 @@ alpha1=0.1
 
 #Mesh
 dx = 0.15 #width of controle volume
-nx = 600 #number of controle volume
+nx = 700 #number of controle volume
 dy = 0.2
-ny = 60
+ny = 150
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #Space
