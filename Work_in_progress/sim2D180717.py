@@ -16,10 +16,10 @@ import csv
 import os, sys
 
 U = 0.8
-Mobility = 0.5 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.3 #code starts going crazy below epsilon=0.1
+Mobility = 0.44 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 1. #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
-duration = 0. #stabilisation phase
+duration = 100. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
 startpoint=0.1
 
@@ -33,10 +33,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.15 #width of controle volume
-nx = 270 #number of controle volume
-dy = 0.2
-ny = 150
+dx = 0.25 #width of controle volume
+nx = 300 #number of controle volume
+dy = 1.
+ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 
@@ -93,7 +93,7 @@ def initialize(phi):
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
     for i in range(ny/2):
-        a = random.gauss(startpoint, 0.005)
+        a = random.gauss(startpoint, 0.01)
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
         phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<2*(i+1)*dy) & (y>2*(i*dy)))
 
@@ -231,11 +231,11 @@ while elapsed < displacement/U:
         xVelocity[0]=U
         xVelocity[nx-1]=U
     elapsed +=timeStep
-    viewer.plot(filename="phi%d_"+sys.argv[1]+".png" % elapsed)
-    viewer2.plot(filename="XVelocity%d_"+sys.argv[1]+".png" % elapsed)
-    viewer4.plot(filename="pressure%d_"+sys.argv[1]+".png" % elapsed)
-    viewer3.plot(filename="YVelocity%d_"+sys.argv[1]+".png" % elapsed)
-    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne%d_"+sys.argv[1]+".tsv" % elapsed)
+    viewer.plot(filename='phi%d_' % elapsed +sys.argv[1]+'.png')
+    viewer2.plot(filename='XVelocity%d_' % elapsed +sys.argv[1]+'.png')
+    viewer4.plot(filename='pressure%d_' % elapsed +sys.argv[1]+'.png')
+    viewer3.plot(filename='YVelocity%d_' % elapsed +sys.argv[1]+'.png')
+    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
 
 
 
