@@ -14,13 +14,15 @@ from fipy import *
 import random
 import csv
 import os, sys
+import numpy
 
-U = 0.8
-Mobility = 0.44 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 1. #code starts going crazy below epsilon=0.1
-l = 0.1 #this is lambda from Hamouda's paper
-duration = 100. #stabilisation phase
-sweeps = 100 #stabilisation vitesse
+
+U = 3.
+Mobility = 0.48 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 0.2 #code starts going crazy below epsilon=0.1
+l = 0.026 #this is lambda from Hamouda's paper
+duration = 0. #stabilisation phase
+sweeps = 41 #stabilisation vitesse
 startpoint=0.1
 
 #-----------------------------------------------------------------------
@@ -34,7 +36,7 @@ b = 1. #gap
 
 #Mesh
 dx = 0.25 #width of controle volume
-nx = 300 #number of controle volume
+nx = 150 #number of controle volume
 dy = 1.
 ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
@@ -92,10 +94,10 @@ def initialize(phi):
 #    phi.setValue(0.)
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
-    for i in range(ny/2):
-        a = random.gauss(startpoint, 0.01)
+    for i in range(ny):
+        a = numpy.random.normal(startpoint, 0.005)
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
-        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<2*(i+1)*dy) & (y>2*(i*dy)))
+        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
 
 
 initialize(phi)
@@ -123,7 +125,7 @@ from fipy.variables.faceGradVariable import _FaceGradVariable
 
 #Viewer
 viewer = Viewer(vars = (phi), datamin=0., datamax=1.)
-viewer2 = Viewer(vars = (xVelocity), datamin=0.7, datamax=0.9)
+viewer2 = Viewer(vars = (xVelocity), datamin=1., datamax=4.)
 viewer3 = Viewer(vars = (yVelocity), datamin=0., datamax=1.)
 viewer4 = Viewer(vars = (pressure), datamin=0., datamax=50.)
 
@@ -140,7 +142,7 @@ elapsed = 0.
 
 while elapsed < duration:
     phi.updateOld()
-    dt = min(100, numerix.exp(dexp))
+    dt = min(30, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
     eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
@@ -188,17 +190,17 @@ for sweep in range(sweeps):
     xVelocity[0]=U
     xVelocity[nx-1]=U
 
-
+"""
 
 
 displacement = 90.
-timeStep = 0.6 * dx / U #less than one space step per time step
+timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
 
 while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
-    while res > 1e-7:
+    while res > 1e-6:
         res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     for sweep in range(sweeps):
@@ -237,5 +239,5 @@ while elapsed < displacement/U:
     viewer3.plot(filename='YVelocity%d_' % elapsed +sys.argv[1]+'.png')
     TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
 
-
-
+"""
+raw_input("pause")
