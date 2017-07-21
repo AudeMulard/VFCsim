@@ -11,25 +11,26 @@ Created on Tue Jun 13 15:21:51 2017
 from fipy import *
 import random
 from math import sqrt
+from numba import jit
 
 
 U = 0.8
-Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.6 #code starts going crazy below epsilon=0.1
-l = 0.3 #this is lambda from Hamouda's paper
+Mobility = 0.44 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 1. #code starts going crazy below epsilon=0.1
+l = 0.1 #this is lambda from Hamouda's paper
 duration = 100. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
-alpha1=0.25
+alpha1=0.1
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
 
 #Mesh
-dx = 0.15 #width of controle volume
+dx = 0.25 #width of controle volume
 nx = 300 #number of controle volume
-dy = 0.5
-ny = 100
+dy = 1.
+ny = 60
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #Space
@@ -83,7 +84,7 @@ x = mesh.cellCenters[0]
 y = mesh.cellCenters[1]
 def initialize(phi):
     for i in range(100):
-        a = random.gauss(0.2, 0.005)
+        a = random.gauss(0.2, 0.03)
         phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx*a)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
 
 initialize(phi)
@@ -128,10 +129,10 @@ viewer4 = Viewer(vars = (pressure), datamin=0., datamax=50.)
 dexp = 1.
 elapsed = 0.
 
-@jit
-def updatephi(phi, elapsed, dexp):
+#@jit
+def updatephi(phi, elapsed, dexp, dt):
     phi.updateOld()
-    eq.solve(var=phi, dt = dt, solver= LinearPCGSolver())
+    eq.solve(var=phi, dt = dt, solver= LinearGMRESSolver())
     if __name__ == '__main__':
         viewer.plot()
 
@@ -139,7 +140,7 @@ while elapsed < duration:
     dt = min(100, numerix.exp(dexp))
     elapsed += dt
     dexp += 0.01
-    updatephi(phi, elapsed, dexp)
+    updatephi(phi, elapsed, dexp, dt)
 
  
 
@@ -152,11 +153,11 @@ pressureCorrection.constrain(0., mesh.facesRight)
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5
 
-@jit
-def updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi,alpha):
+#@jit
+def updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi, alpha):
     ##Solve the Stokes equations to get starred value
 #    xVelocityEq.cacheMatrix()
-    xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation)
+    xres = xVelocityEq.sweep(var=xVelocity, underRelaxation=velocityRelaxation,)
 #    xmat = xVelocityEq.matrix
     yres = yVelocityEq.sweep(var=yVelocity, underRelaxation=velocityRelaxation)
     ##update the ap coefficient from the matrix diagonal
@@ -188,8 +189,6 @@ for sweep in range(sweeps):
     updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi, alpha)
 
 
-
-
 displacement = 60.
 timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
@@ -198,10 +197,10 @@ while elapsed < displacement/U:
     phi.updateOld()
     res = 1e+10
     while res > 1e-6:
-        res = eq.sweep(var=phi, dt=timeStep, solver=LinearPCGSolver())
+        res = eq.sweep(var=phi, dt=timeStep, solver=LinearGMRESSolver())
     beta.setValue(beta2 * phi + beta1 * (1.-phi))
     alpha.setValue(alpha1*(1.-phi))
-    updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi)
+    updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi, alpha)
     elapsed +=timeStep
     viewer.plot(filename="phi%d.png" % elapsed)
     viewer2.plot(filename="XVelocity%d.png" % elapsed)
