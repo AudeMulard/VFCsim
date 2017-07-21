@@ -5,7 +5,7 @@ mkdir -p Results_simulations/sim_"${2}"
 cd Results_simulations/sim_"${2}"
 mkdir -p phi pressure xVelocity yVelocity data
 cd /home/aude/
-python VFCsim/Work_in_progress/"${1}".py "${2}"
+#python VFCsim/Work_in_progress/"${1}".py "${2}"
 mv phi*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/phi
 mv pressure*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/pressure
 mv XVelocity*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/xVelocity

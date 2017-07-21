@@ -1,0 +1,6 @@
+cd VFCsim/Videos/
+mkfifo cmds1 cmds2
+mplayer -slave -input file=cmds1 -quiet sim_72.avi &
+mplayer -slave -input file=cmds2 -quiet sim_73.avi &
+tee cmds1 cmds2
+
