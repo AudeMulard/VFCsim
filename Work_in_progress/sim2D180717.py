@@ -17,10 +17,10 @@ import os, sys
 import numpy
 
 
-U = 0.2
-Mobility = 0.84 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.35 #code starts going crazy below epsilon=0.1
-l = 0.04 #this is lambda from Hamouda's paper
+U = 0.8
+Mobility = 0.35 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 0.5 #code starts going crazy below epsilon=0.1
+l = 0.1 #this is lambda from Hamouda's paper
 duration = 0. #stabilisation phase
 sweeps = 41 #stabilisation vitesse
 startpoint=0.1
@@ -35,10 +35,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.15 #width of controle volume
-nx = 500 #number of controle volume
-dy = 1.
-ny = 60
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 0.5
+ny = 120
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 
@@ -95,7 +95,7 @@ def initialize(phi):
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
     for i in range(ny):
-        a = numpy.random.normal(startpoint, 0.0005)
+        a = numpy.random.normal(startpoint, 0.001)
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
 #        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**3/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
         phi.setValue(0.5*(1+numerix.tanh((x-nx*dx*a)/(2*epsilon))), where=(y<(i+1)*dy) & (y>(i*dy)))
@@ -125,7 +125,7 @@ from fipy.variables.faceGradVariable import _FaceGradVariable
 
 #Viewer
 viewer = Viewer(vars = (phi), datamin=0., datamax=1.)
-viewer2 = Viewer(vars = (xVelocity), datamin=0., datamax=0.3)
+viewer2 = Viewer(vars = (xVelocity), datamin=0.5, datamax=1.)
 viewer3 = Viewer(vars = (yVelocity), datamin=0., datamax=0.2)
 viewer4 = Viewer(vars = (pressure), datamin=0., datamax=nx*dx*U)
 
