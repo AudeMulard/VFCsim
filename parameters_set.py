@@ -1,8 +1,8 @@
 import math
 
 U = 0.8
-Mobility = 0.2 #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.35 #code starts going crazy below epsilon=0.1
+Mobility = 0.1 #ratio of the two viscosities; M_c in Hamouda's paper
+epsilon = 0.25 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
 duration = 1. #stabilisation phase
 sweeps = 41 #stabilisation vitesse
@@ -17,4 +17,4 @@ ny = 60
 
 
 #print(1-((2*math.pi/w)**2*2*math.sqrt(2)*l/(U*epsilon)))
-print(2*math.pi*math.sqrt(2*math.sqrt(2)*l/((1-Mobility)*U*epsilon))
+print(2*math.pi*math.sqrt(2*math.sqrt(2)*l/((1-Mobility)*U*epsilon)))
