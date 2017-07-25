@@ -95,7 +95,7 @@ yVelocityEq = (ImplicitSourceTerm(coeff=beta) + pressure.grad[1])
 
 ap = CellVariable(mesh=mesh, value=1.)
 coeff = 1./ ap.arithmeticFaceValue * mesh._faceAreas * mesh._cellDistances
-pressureCorrectionEq = DiffusionTerm(coeff=coeff) - velocity.divergence
+pressureCorrectionEq = DiffusionTerm(coeff=coeff) + velocity.divergence
 
 #Remove oscillations
 from fipy.variables.faceGradVariable import _FaceGradVariable
@@ -118,7 +118,7 @@ viewer4 = Viewer(vars = (beta), datamin=0., datamax=1.)
 #-----------------------------------------------------------------------
 #---------------------------Initialization------------------------------
 #-----------------------------------------------------------------------
-"""
+
 #Phase
 
 dexp = 1.
@@ -134,7 +134,7 @@ while elapsed < duration:
         viewer.plot()
 
  
-"""
+
 #Pressure and velocity
 pressureRelaxation = 0.8
 velocityRelaxation = 0.5

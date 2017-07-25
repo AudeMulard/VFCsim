@@ -6,7 +6,7 @@ cd Results_simulations/sim_"${2}"
 mkdir -p phi pressure xVelocity yVelocity data
 
 cd /home/aude/
-python VFCsim/Work_in_progress/"${1}".py "${2}"
+python VFCsim/Work_in_progress/"${1}".py "${2}" "${3}"
 
 mv phi*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/phi
 mv pressure*_"${2}".png VFCsim/Results_simulations/sim_"${2}"/pressure
@@ -22,6 +22,7 @@ do mv VFCsim/Results_simulations/sim_"${2}"/phi/phi"${i}"_"${2}".png VFCsim/Resu
 done
 cd VFCsim/Results_simulations/sim_"${2}"/phi/
 mencoder mf:// -mf w=800:h=600:fps=04:type=png -ovc lavc -oac copy -o sim_"${2}".avi
-cd
+cd /home/aude/
 mv VFCsim/Results_simulations/sim_"${2}"/phi/sim_"${2}".avi VFCsim/Videos/sim_"${2}".avi
 date
+cd VFCsim/
