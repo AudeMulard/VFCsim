@@ -20,7 +20,7 @@ import numpy
 
 U = 0.8
 Mobility = float(sys.argv[2]) #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.5 #code starts going crazy below epsilon=0.1
+epsilon = 0.25 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
 duration = 0. #stabilisation phase
 sweeps = 41 #stabilisation vitesse
@@ -36,10 +36,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.25 #width of controle volume
-nx = 150 #number of controle volume
-dy = 0.5
-ny = 120
+dx = 0.05 #width of controle volume
+nx = 300 #number of controle volume
+dy = 0.1
+ny = 200
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 startpoint=0.1*nx*dx
 
@@ -95,11 +95,11 @@ def initialize(phi):
 #    phi.setValue(0.)
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
-    for i in range(6):
+    for i in range(ny):
         a = numpy.random.normal(startpoint, 0.1)
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
 #        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
-        phi.setValue(0.5*(1+numerix.tanh((x-a)/(2*epsilon))), where=(y<(i+1)*10) & (y>i*10))
+        phi.setValue(0.5*(1+numerix.tanh((x-a)/(2*epsilon))), where=(y<(i+1)*dy) & (y>i*dy))
 
 
 

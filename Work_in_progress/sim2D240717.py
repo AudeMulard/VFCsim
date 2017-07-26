@@ -95,11 +95,11 @@ def initialize(phi):
 #    phi.setValue(0.)
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
-    for i in range(6):
+    for i in range(ny):
         a = numpy.random.normal(startpoint, 0.1)
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
 #        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
-        phi.setValue(0.5*(1+numerix.tanh((x-a)/(2*epsilon))), where=(y<(i+1)*10) & (y>i*10))
+        phi.setValue(0.5*(1+numerix.tanh((x-a)/(2*epsilon))), where=(y<(i+1)*dy) & (y>i*dy))
 
 
 
@@ -196,7 +196,7 @@ for sweep in range(sweeps):
 
 
 
-displacement = 35.
+displacement = 20.
 timeStep = 0.8 * dx / U #less than one space step per time step
 elapsed = 0.
  
