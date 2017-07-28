@@ -20,8 +20,8 @@ import numpy
 
 U = 0.8
 Mobility = float(sys.argv[2]) #ratio of the two viscosities; M_c in Hamouda's paper
-epsilon = 0.25 #code starts going crazy below epsilon=0.1
-l = 0.1 #this is lambda from Hamouda's paper
+epsilon = 0.5 #code starts going crazy below epsilon=0.1
+l = 0.05 #this is lambda from Hamouda's paper
 duration = 0. #stabilisation phase
 sweeps = 41 #stabilisation vitesse
 
@@ -36,10 +36,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.05 #width of controle volume
-nx = 300 #number of controle volume
-dy = 0.1
-ny = 200
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 0.5
+ny = 120
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 startpoint=0.1*nx*dx
 
