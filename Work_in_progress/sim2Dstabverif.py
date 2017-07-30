@@ -96,7 +96,7 @@ def initialize(phi):
 #    phi.setValue(1., where=(x > 0.2*nx*dx +numerix.sin(3*y)))
 #    phi.setValue(1-0.5*(1-numerix.tanh((x-nx*dx/2)/(2*numerix.sqrt(M*2*epsilon**2/l)))))
     for i in range(ny):
-        a = numpy.random.normal(startpoint, 0.005*nx*dx)
+        a = numpy.random.normal(startpoint, float(sys.argv[2]))
 #        a = 0.1*nx*dx + 0.15*(numerix.sin(0.6*numerix.pi/2*(i+3)*dy)+numerix.sin(4*numerix.pi/2*i*dy)+numerix.sin(2*numerix.pi/2*i*dy+numerix.pi/2))
 #        phi.setValue(1-0.5*(1-numerix.tanh((x-a*nx*dx)/(2*numerix.sqrt(M*2*epsilon**2/l)))), where=(y<(i+1)*dy) & (y>(i*dy)))
         phi.setValue(0.5*(1+numerix.tanh((x-a)/(2*epsilon))), where=(y<(i+1)*dy) & (y>(i*dy)))
@@ -149,8 +149,7 @@ while elapsed < duration:
     elapsed += dt
     dexp += 0.01
     eq.solve(var=phi, dt = dt, solver=LinearGMRESSolver())
-    if __name__ == '__main__':
-        viewer.plot(filename='phi%d_' % elapsed +sys.argv[1]+'.png')
+    viewer.plot(filename='phi%d_' % elapsed +sys.argv[1]+'.png')
+    TSVViewer(vars=(phi)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
 
 
-raw_input("pause")
