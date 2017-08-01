@@ -235,7 +235,7 @@ while elapsed < displacement/U:
     viewer2.plot(filename='XVelocity%d_' % elapsed +sys.argv[1]+'.png')
     viewer4.plot(filename='pressure%d_' % elapsed +sys.argv[1]+'.png')
     viewer3.plot(filename='YVelocity%d_' % elapsed +sys.argv[1]+'.png')
-    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
+    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
     print(elapsed)
 
 

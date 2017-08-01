@@ -193,7 +193,8 @@ for sweep in range(sweeps):
 
 
 displacement = 35.
-timeStep = float(sys.argv[3]) * dx / U #less than one space step per time step
+b=float(sys.argv[3])
+timeStep = b * dx / U #less than one space step per time step
 elapsed = 0.
  
 while elapsed < displacement/U:
