@@ -36,10 +36,10 @@ W = 1. #width: characteristic length
 b = 1. #gap
 
 #Mesh
-dx = 0.1 #width of controle volume
-nx = 300 #number of controle volume
-dy = 0.15
-ny = 400
+dx = 0.25 #width of controle volume
+nx = 150 #number of controle volume
+dy = 0.5
+ny = 120
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 startpoint=0.1*nx*dx
 

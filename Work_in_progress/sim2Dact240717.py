@@ -13,24 +13,28 @@ import random
 from math import sqrt
 from numba import jit
 
+import csv
+import os, sys
+import numpy
+
 
 U = 0.8
-Mobility = 1. #ratio of the two viscosities; M_c in Hamouda's paper
+Mobility = float(sys.argv[2]) #ratio of the two viscosities; M_c in Hamouda's paper
 epsilon = 0.5 #code starts going crazy below epsilon=0.1
 l = 0.1 #this is lambda from Hamouda's paper
-duration = 100. #stabilisation phase
+duration = 0. #stabilisation phase
 sweeps = 100 #stabilisation vitesse
-alpha1=0.1
+alpha1=float(sys.argv[3])
 
 #-----------------------------------------------------------------------
 #------------------------Geometry and mesh------------------------------
 #-----------------------------------------------------------------------
 
 #Mesh
-dx = 0.25 #width of controle volume
-nx = 150 #number of controle volume
-dy = 0.5
-ny = 120
+dx = 0.15 #width of controle volume
+nx = 200 #number of controle volume
+dy = 0.3
+ny = 200
 mesh = Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 
 #Space
@@ -41,17 +45,17 @@ print "L =",L, "; W =", W
 startpoint=0.1*nx*dx
 
 parameters=csv.writer(open('parameters_'+sys.argv[1]+'.csv','w'), delimiter=' ', quotechar='|')
-parameters.writerow(['U']+['Mobility']+['epsilon']+['l']+['dx']+['nx']+['dy']+['ny'])
-parameters.writerow([U]+[Mobility]+[epsilon]+[l]+[dx]+[nx]+[dy]+[ny])
+parameters.writerow(['U']+['Mobility']+['epsilon']+['l']+['dx']+['nx']+['dy']+['ny']+['alpha'])
+parameters.writerow([U]+[Mobility]+[epsilon]+[l]+[dx]+[nx]+[dy]+[ny]+[alpha1])
 
 #-----------------------------------------------------------------------
 #---------------------Description of the fluids-------------------------
 #-----------------------------------------------------------------------
 
 #Parameters of the fluids
-viscosity2 = 1.
+viscosity1 = 1.
 M = Mobility * epsilon**2 #M in Hamouda's paper
-viscosity1 = viscosity2 * Mobility
+viscosity2 = viscosity1 / Mobility
 permeability1 = permeability2 = 1.
 beta1 = viscosity1 / permeability1
 beta2 = viscosity2 / permeability2
@@ -207,11 +211,11 @@ while elapsed < displacement/U:
     alpha.setValue(alpha1*(1.-phi))
     updatemotion(velocity, xVelocity, yVelocity, pressure, pressureCorrection, beta, phi, alpha)
     elapsed +=timeStep
-    viewer.plot(filename="phi%d.png" % elapsed)
-    viewer2.plot(filename="XVelocity%d.png" % elapsed)
-    viewer4.plot(filename="pressure%d.png" % elapsed)
-    viewer3.plot(filename="YVelocity%d.png" % elapsed)
-    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure,beta)).plot(filename="essaidonne%d.tsv" % elapsed)
+    viewer.plot(filename='phi%d_' % elapsed +sys.argv[1]+'.png')
+    viewer2.plot(filename='XVelocity%d_' % elapsed +sys.argv[1]+'.png')
+    viewer4.plot(filename='pressure%d_' % elapsed +sys.argv[1]+'.png')
+    viewer3.plot(filename='YVelocity%d_' % elapsed +sys.argv[1]+'.png')
+    TSVViewer(vars=(phi, xVelocity, yVelocity, pressure)).plot(filename='essaidonne%d_'% elapsed +sys.argv[1]+'.tsv')
     print(elapsed)
 
 
